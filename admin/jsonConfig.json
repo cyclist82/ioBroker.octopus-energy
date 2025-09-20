@@ -1,0 +1,72 @@
+{
+	"i18n": true,
+	"type": "panel",
+	"items": {
+		"TibberAPIToken": {
+			"type": "text",
+			"label": "E-Mail Address",
+			"maxLength": 80,
+			"xs": 12,
+			"sm": 12,
+			"md": 8,
+			"lg": 6,
+			"xl": 4,
+			"newLine": true
+		},
+		"password": {
+			"type": "password",
+			"label": "Password",
+			"maxLength": 80,
+			"xs": 12,
+			"sm": 12,
+			"md": 8,
+			"lg": 6,
+			"xl": 4,
+			"newLine": true
+		},
+		"HomesList": {
+			"type": "table",
+			"label": "LBL_HomesList",
+			"hidden": "!data.email && !data.password",
+			"xs": 12,
+			"sm": 12,
+			"md": 12,
+			"lg": 12,
+			"xl": 12,
+			"items": [
+				{
+					"type": "selectSendTo",
+					"label": "LBL_item_homeID",
+					"tooltip": "TTIP_item_homeID",
+					"command": "HomesForConfig",
+					"attr": "homeID",
+					"filter": false,
+					"sort": false,
+					"width": "40%",
+					"default": "No Home selected"
+				},
+				{
+					"type": "checkbox",
+					"label": "LBL_item_priceDataPollActive",
+					"tooltip": "TTIP_item_priceDataPollActive",
+					"attr": "priceDataPollActive",
+					"filter": false,
+					"sort": false,
+					"width": "10%",
+					"default": true
+				}
+			]
+		},
+		"_feedDataDetailHeader": {
+			"type": "header",
+			"text": "LBL_feedDataDetailHeader",
+			"hidden": "!data.TibberAPIToken",
+			"xs": 12,
+			"sm": 12,
+			"md": 12,
+			"lg": 12,
+			"xl": 12,
+			"size": 3
+		}
+	}
+}
