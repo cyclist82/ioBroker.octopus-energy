@@ -2,7 +2,7 @@
 	"i18n": true,
 	"type": "panel",
 	"items": {
-		"TibberAPIToken": {
+		"email": {
 			"type": "text",
 			"label": "E-Mail Address",
 			"maxLength": 80,

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../src/lib/dto/token-response.ts"],
+  "sourcesContent": ["/**\n * Interface for the JWT payload\n */\nexport interface JWTPayload {\n\tsub: string;\n\tgty: string;\n\temail: string;\n\ttokenUse: string;\n\tiss: string;\n\tiat: number;\n\texp: number;\n\torigIat: number;\n}\n\n/**\n * Interface for the Kraken token authentication response\n */\nexport interface KrakenTokenResponse {\n\tobtainKrakenToken: {\n\t\ttoken: string;\n\t\tpayload: JWTPayload;\n\t};\n}\n\n/**\n * Interface for the GraphQL mutation variables\n */\nexport interface KrakenTokenVariables {\n\temail: string;\n\tpassword: string;\n}\n"],
+  "mappings": ";;;;;;;;;;;;;;AAAA;AAAA;",
+  "names": []
+}
