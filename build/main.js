@@ -22,7 +22,11 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 var utils = __toESM(require("@iobroker/adapter-core"));
+var import_axios = __toESM(require("axios"));
 class OctopusEnergy extends utils.Adapter {
+  token = "";
+  tokenExpiry = null;
+  apiUrl = "https://api.oeg-kraken.energy/v1/graphql/";
   constructor(options = {}) {
     super({
       ...options,
@@ -36,8 +40,12 @@ class OctopusEnergy extends utils.Adapter {
    * Is called when databases are connected and adapter received configuration.
    */
   async onReady() {
-    this.log.info("config option1: " + this.config.option1);
-    this.log.info("config option2: " + this.config.option2);
+    try {
+      await this.getToken();
+    } catch (error) {
+      this.log.error(`Failed to initialize adapter: ${error.message}`);
+      throw error;
+    }
     await this.setObjectNotExistsAsync("testVariable", {
       type: "state",
       common: {
@@ -107,6 +115,100 @@ class OctopusEnergy extends utils.Adapter {
   // 		}
   // 	}
   // }
+  /**
+   * Get authentication token with caching and retry logic
+   * @returns Promise<string> The authentication token
+   */
+  async getToken() {
+    var _a, _b, _c;
+    if (this.token && this.tokenExpiry && this.tokenExpiry > /* @__PURE__ */ new Date()) {
+      return this.token;
+    }
+    if (!(this.config.email && this.config.password)) {
+      throw new Error("Email and password are not configured");
+    }
+    const mutation = `
+			mutation krakenTokenAuthentication($email: String!, $password: String!) {
+				obtainKrakenToken(input: { email: $email, password: $password }) {
+					token
+					payload
+				}
+			}
+		`;
+    const operationName = "krakenTokenAuthentication";
+    const variables = {
+      email: this.config.email,
+      password: this.config.password
+    };
+    let lastError = null;
+    const maxRetries = 3;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        this.log.info(`Attempting to authenticate with Octopus Energy API (attempt ${attempt}/${maxRetries})`);
+        const response = await this.makeGraphQLRequest(
+          mutation,
+          variables,
+          operationName
+        );
+        const token = (_a = response.obtainKrakenToken) == null ? void 0 : _a.token;
+        const expiry = (_c = (_b = response.obtainKrakenToken) == null ? void 0 : _b.payload) == null ? void 0 : _c.exp;
+        if (token) {
+          this.token = token;
+          if (expiry) {
+            this.tokenExpiry = new Date(expiry * 1e3);
+            this.log.info(`Token expires at: ${this.tokenExpiry.toISOString()}`);
+          }
+          this.log.info("Successfully authenticated with Octopus Energy API");
+          return this.token;
+        } else {
+          throw new Error("Authentication failed: No token received");
+        }
+      } catch (error) {
+        lastError = error;
+        this.log.warn(`Authentication attempt ${attempt}/${maxRetries} failed: ${error.message}`);
+        if (attempt < maxRetries) {
+          const delay = Math.pow(2, attempt - 1) * 1e3;
+          this.log.info(`Waiting ${delay}ms before retry...`);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+      }
+    }
+    this.log.error(`Failed to authenticate with Octopus Energy API after ${maxRetries} attempts`);
+    throw new Error(`Authentication failed after ${maxRetries} attempts: ${(lastError == null ? void 0 : lastError.message) || "Unknown error"}`);
+  }
+  /**
+   * Make HTTP request to GraphQL endpoint using Axios
+   */
+  async makeGraphQLRequest(query, variables = {}, operationName) {
+    try {
+      const response = await import_axios.default.post(
+        this.apiUrl,
+        {
+          query,
+          variables,
+          operationName
+        },
+        {
+          headers: {
+            "Content-Type": "application/json"
+          }
+        }
+      );
+      const result = response.data;
+      if (result.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+      }
+      return result.data;
+    } catch (error) {
+      if (error.response) {
+        throw new Error(`HTTP ${error.response.status}: ${error.response.statusText}`);
+      } else if (error.request) {
+        throw new Error("No response received from server");
+      } else {
+        throw error;
+      }
+    }
+  }
 }
 if (require.main !== module) {
   module.exports = (options) => new OctopusEnergy(options);

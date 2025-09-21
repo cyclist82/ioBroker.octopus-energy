@@ -1,15 +1,12 @@
-/*
- * Created with @iobroker/create-adapter v2.6.5
- */
-
-// The adapter-core module gives you access to the core ioBroker functions
-// you need to create an adapter
 import * as utils from '@iobroker/adapter-core';
-
-// Load your modules here, e.g.:
-// import * as fs from "fs";
+import axios from 'axios';
+import { KrakenTokenResponse } from './lib/dto';
 
 class OctopusEnergy extends utils.Adapter {
+	private token = '';
+	private tokenExpiry: Date | null = null;
+	private readonly apiUrl = 'https://api.oeg-kraken.energy/v1/graphql/';
+
 	public constructor(options: Partial<utils.AdapterOptions> = {}) {
 		super({
 			...options,
@@ -27,11 +24,13 @@ class OctopusEnergy extends utils.Adapter {
 	 */
 	private async onReady(): Promise<void> {
 		// Initialize your adapter here
-
-		// The adapters config (in the instance object everything under the attribute "native") is accessible via
-		// this.config:
-		this.log.info('config option1: ' + this.config.option1);
-		this.log.info('config option2: ' + this.config.option2);
+		try {
+			// Get authentication token
+			await this.getToken();
+		} catch (error: any) {
+			this.log.error(`Failed to initialize adapter: ${error.message}`);
+			throw error;
+		}
 
 		/*
 		For every state in the system there has to be also an object of type state
@@ -140,6 +139,120 @@ class OctopusEnergy extends utils.Adapter {
 	// 		}
 	// 	}
 	// }
+
+	/**
+	 * Get authentication token with caching and retry logic
+	 * @returns Promise<string> The authentication token
+	 */
+	private async getToken(): Promise<string> {
+		// Check if we have a valid cached token
+		if (this.token && this.tokenExpiry && this.tokenExpiry > new Date()) {
+			return this.token;
+		}
+
+		// Validate configuration
+		if (!(this.config.email && this.config.password)) {
+			throw new Error('Email and password are not configured');
+		}
+
+		const mutation = `
+			mutation krakenTokenAuthentication($email: String!, $password: String!) {
+				obtainKrakenToken(input: { email: $email, password: $password }) {
+					token
+					payload
+				}
+			}
+		`;
+		const operationName = 'krakenTokenAuthentication';
+
+		const variables = {
+			email: this.config.email,
+			password: this.config.password,
+		};
+
+		let lastError: Error | null = null;
+		const maxRetries = 3;
+
+		for (let attempt = 1; attempt <= maxRetries; attempt++) {
+			try {
+				this.log.info(`Attempting to authenticate with Octopus Energy API (attempt ${attempt}/${maxRetries})`);
+
+				const response = (await this.makeGraphQLRequest(
+					mutation,
+					variables,
+					operationName,
+				)) as KrakenTokenResponse;
+				const token = response.obtainKrakenToken?.token;
+				const expiry = response.obtainKrakenToken?.payload?.exp;
+				if (token) {
+					this.token = token;
+
+					// Extract token expiry from payload
+					if (expiry) {
+						this.tokenExpiry = new Date(expiry * 1000); // Convert from Unix timestamp to Date
+						this.log.info(`Token expires at: ${this.tokenExpiry.toISOString()}`);
+					}
+
+					this.log.info('Successfully authenticated with Octopus Energy API');
+					return this.token;
+				} else {
+					throw new Error('Authentication failed: No token received');
+				}
+			} catch (error: any) {
+				lastError = error;
+				this.log.warn(`Authentication attempt ${attempt}/${maxRetries} failed: ${error.message}`);
+
+				// If this isn't the last attempt, wait before retrying
+				if (attempt < maxRetries) {
+					const delay = Math.pow(2, attempt - 1) * 1000; // Exponential backoff: 1s, 2s, 4s
+					this.log.info(`Waiting ${delay}ms before retry...`);
+					await new Promise((resolve) => setTimeout(resolve, delay));
+				}
+			}
+		}
+
+		// All retries failed
+		this.log.error(`Failed to authenticate with Octopus Energy API after ${maxRetries} attempts`);
+		throw new Error(`Authentication failed after ${maxRetries} attempts: ${lastError?.message || 'Unknown error'}`);
+	}
+
+	/**
+	 * Make HTTP request to GraphQL endpoint using Axios
+	 */
+	private async makeGraphQLRequest(query: string, variables: any = {}, operationName: string): Promise<any> {
+		try {
+			const response = await axios.post(
+				this.apiUrl,
+				{
+					query,
+					variables,
+					operationName,
+				},
+				{
+					headers: {
+						'Content-Type': 'application/json',
+					},
+				},
+			);
+			const result = response.data as any;
+			if (result.errors) {
+				throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`);
+			}
+
+			return result.data;
+		} catch (error: any) {
+			if (error.response) {
+				// Server responded with error status
+				throw new Error(`HTTP ${error.response.status}: ${error.response.statusText}`);
+			} else if (error.request) {
+				// Request was made but no response received
+				throw new Error('No response received from server');
+			} else {
+				// Something else happened
+				throw error;
+			}
+		}
+	}
 }
 
 if (require.main !== module) {
