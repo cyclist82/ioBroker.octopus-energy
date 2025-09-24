@@ -24,6 +24,17 @@
 			"xl": 4,
 			"newLine": true
 		},
+		"accountId": {
+			"type": "text",
+			"label": "Account ID",
+			"maxLength": 80,
+			"xs": 12,
+			"sm": 12,
+			"md": 8,
+			"lg": 6,
+			"xl": 4,
+			"newLine": true
+		},
 		"HomesList": {
 			"type": "table",
 			"label": "LBL_HomesList",

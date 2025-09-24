@@ -6,6 +6,7 @@ declare global {
 		interface AdapterConfig {
 			email: string;
 			password: string;
+			accountId: string;
 		}
 	}
 }

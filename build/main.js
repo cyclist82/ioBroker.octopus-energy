@@ -41,7 +41,15 @@ class OctopusEnergy extends utils.Adapter {
    */
   async onReady() {
     try {
+      const { accountId } = this.config;
       await this.getToken();
+      console.log("TOKKEN", this.token);
+      const properties = await this.getPropertyIds(accountId);
+      console.log("PROPPS", properties);
+      for (const propId of properties) {
+        const prices = await this.getSmartMeterUsage(accountId, propId, "2025-09-25");
+        console.log("PRICES", prices);
+      }
     } catch (error) {
       this.log.error(`Failed to initialize adapter: ${error.message}`);
       throw error;
@@ -177,9 +185,72 @@ class OctopusEnergy extends utils.Adapter {
     throw new Error(`Authentication failed after ${maxRetries} attempts: ${(lastError == null ? void 0 : lastError.message) || "Unknown error"}`);
   }
   /**
+   * Get smart meter usage data for energy prices
+   */
+  async getSmartMeterUsage(accountNumber, propertyId, date) {
+    const query = `
+			query getSmartMeterUsage($accountNumber: String!, $propertyId: ID!, $date: Date!) {
+				account(accountNumber: $accountNumber) {
+					property(id: $propertyId) {
+						measurements(
+							utilityFilters: {electricityFilters: {readingFrequencyType: RAW_INTERVAL, readingQuality: COMBINED}}
+							startOn: $date
+							first: 96
+						) {
+							edges {
+								node {
+									... on IntervalMeasurementType {
+										endAt
+										startAt
+										unit
+										value
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		`;
+    const variables = {
+      accountNumber,
+      propertyId,
+      date
+    };
+    const operationName = "getSmartMeterUsage";
+    await this.getToken();
+    return await this.makeGraphQLRequest(query, variables, operationName, true);
+  }
+  /**
+   * Get property IDs for an account
+   */
+  async getPropertyIds(accountNumber) {
+    console.log("ACCC", accountNumber);
+    const query = `
+			query getPropertyIds($accountNumber: String!) {
+				account(accountNumber: $accountNumber) {
+					properties {
+						id
+						occupancyPeriods {
+							effectiveFrom
+							effectiveTo
+						}
+					}
+				}
+			}
+		`;
+    const variables = {
+      accountNumber
+    };
+    const operationName = "getPropertyIds";
+    await this.getToken();
+    const response = await this.makeGraphQLRequest(query, variables, operationName, true);
+    return response.account.properties.map(({ id }) => id);
+  }
+  /**
    * Make HTTP request to GraphQL endpoint using Axios
    */
-  async makeGraphQLRequest(query, variables = {}, operationName) {
+  async makeGraphQLRequest(query, variables = {}, operationName, isAuthenticated = false) {
     try {
       const response = await import_axios.default.post(
         this.apiUrl,
@@ -190,7 +261,8 @@ class OctopusEnergy extends utils.Adapter {
         },
         {
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            ...isAuthenticated && { Authorization: this.token }
           }
         }
       );
