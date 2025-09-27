@@ -874,10 +874,14 @@ class OctopusEnergy extends utils.Adapter {
 									val: JSON.stringify(readings),
 									ack: true,
 								});
-								this.log.debug(`Updated ${readings.length} smart meter readings for property ${property.id}`);
+								this.log.debug(
+									`Updated ${readings.length} smart meter readings for property ${property.id}`,
+								);
 							}
 						} catch (error: any) {
-							this.log.debug(`Failed to fetch smart meter readings for property ${property.id}: ${error.message}`);
+							this.log.debug(
+								`Failed to fetch smart meter readings for property ${property.id}: ${error.message}`,
+							);
 						}
 					}
 				}
