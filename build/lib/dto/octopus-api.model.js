@@ -12,6 +12,6 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var token_response_exports = {};
-module.exports = __toCommonJS(token_response_exports);
-//# sourceMappingURL=token-response.js.map
+var octopus_api_model_exports = {};
+module.exports = __toCommonJS(octopus_api_model_exports);
+//# sourceMappingURL=octopus-api.model.js.map
