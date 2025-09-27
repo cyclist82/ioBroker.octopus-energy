@@ -11,15 +11,7 @@ var __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
-var __reExport = (target, mod, secondTarget) => (__copyProps(target, mod, "default"), secondTarget && __copyProps(secondTarget, mod, "default"));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var dto_exports = {};
-module.exports = __toCommonJS(dto_exports);
-__reExport(dto_exports, require("./token-response.model"), module.exports);
-__reExport(dto_exports, require("./octopus-api.model"), module.exports);
-// Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {
-  ...require("./token-response.model"),
-  ...require("./octopus-api.model")
-});
-//# sourceMappingURL=index.js.map
+var token_response_model_exports = {};
+module.exports = __toCommonJS(token_response_model_exports);
+//# sourceMappingURL=token-response.model.js.map
