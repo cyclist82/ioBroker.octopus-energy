@@ -10,102 +10,201 @@
 
 **Tests:** ![Test and Release](https://github.com/cyclist82/ioBroker.octopus-energy/workflows/Test%20and%20Release/badge.svg)
 
-## octopus-energy adapter for ioBroker
+## Octopus Energy Germany adapter for ioBroker
 
-connect octopus-energy API data to be used in ioBroker
+This adapter connects to the Octopus Energy Germany API to integrate your energy data into your ioBroker smart home / home automation system. Access real-time pricing, consumption data, and manage your energy usage more efficiently.
 
-## Developer manual
-This section is intended for the developer. It can be deleted later.
+## Overview
 
-### DISCLAIMER
+The Octopus Energy adapter for ioBroker enables you to:
+- 📊 Monitor your current account balance and energy consumption
+- 💡 Access real-time electricity and gas tariff rates
+- ⚡ View time-of-use rates for dynamic tariffs like Agile Octopus
+- 📈 Track historical consumption data from smart meters
+- 🔌 Monitor and control smart devices (when available)
+- 🏠 Integrate energy data into your home automation scenarios
 
-Please make sure that you consider copyrights and trademarks when you use names or logos of a company and add a disclaimer to your README.
-You can check other adapters for examples or ask in the developer community. Using a name or logo of a company without permission may cause legal problems for you.
+## Prerequisites
 
-### Getting started
+To use this adapter, you need:
+- An active Octopus Energy Germany account
+- Your Octopus Energy login credentials (email and password)
+- ioBroker installation (version 5.0.0 or higher recommended)
 
-You are almost done, only a few steps left:
-1. Create a new repository on GitHub with the name `ioBroker.octopus-energy`
-1. Initialize the current folder as a new git repository:  
-	```bash
-	git init -b main
-	git add .
-	git commit -m "Initial commit"
-	```
-1. Link your local repository with the one on GitHub:  
-	```bash
-	git remote add origin https://github.com/cyclist82/ioBroker.octopus-energy
-	```
+### Not yet an Octopus Energy customer?
 
-1. Push all files to the GitHub repo:  
-	```bash
-	git push origin main
-	```
-1. Add a new secret under https://github.com/cyclist82/ioBroker.octopus-energy/settings/secrets. It must be named `AUTO_MERGE_TOKEN` and contain a personal access token with push access to the repository, e.g. yours. You can create a new token under https://github.com/settings/tokens.
+If you're considering switching to Octopus Energy Germany, you can use this referral link to get started:
 
-1. Head over to [src/main.ts](src/main.ts) and start programming!
+🎁 **[Join Octopus Energy with our referral link](https://share.octopusenergy.de/frosty-car-615)**
 
-### Best Practices
-We've collected some [best practices](https://github.com/ioBroker/ioBroker.repositories#development-and-coding-best-practices) regarding ioBroker development and coding in general. If you're new to ioBroker or Node.js, you should
-check them out. If you're already experienced, you should also take a look at them - you might learn something new :)
+Both you and the referrer will benefit from special bonuses when you sign up using this link.
 
-### Scripts in `package.json`
-Several npm scripts are predefined for your convenience. You can run them using `npm run <scriptname>`
-| Script name | Description |
-|-------------|-------------|
-| `build` | Compile the TypeScript sources. |
-| `watch` | Compile the TypeScript sources and watch for changes. |
-| `test:ts` | Executes the tests you defined in `*.test.ts` files. |
-| `test:package` | Ensures your `package.json` and `io-package.json` are valid. |
-| `test:integration` | Tests the adapter startup with an actual instance of ioBroker. |
-| `test` | Performs a minimal test run on package files and your tests. |
-| `check` | Performs a type-check on your code (without compiling anything). |
-| `lint` | Runs `ESLint` to check your code for formatting errors and potential bugs. |
-| `translate` | Translates texts in your adapter to all required languages, see [`@iobroker/adapter-dev`](https://github.com/ioBroker/adapter-dev#manage-translations) for more details. |
-| `release` | Creates a new release, see [`@alcalzone/release-script`](https://github.com/AlCalzone/release-script#usage) for more details. |
+## Installation
 
-### Configuring the compilation
-The adapter template uses [esbuild](https://esbuild.github.io/) to compile TypeScript and/or React code. You can configure many compilation settings 
-either in `tsconfig.json` or by changing options for the build tasks. These options are described in detail in the
-[`@iobroker/adapter-dev` documentation](https://github.com/ioBroker/adapter-dev#compile-adapter-files).
+1. Open your ioBroker admin interface
+2. Navigate to the adapter tab
+3. Search for "octopus-energy"
+4. Click on the install button for the Octopus Energy adapter
+5. Create a new instance of the adapter
+6. Configure your credentials in the adapter settings
 
-### Writing tests
-When done right, testing code is invaluable, because it gives you the 
-confidence to change your code while knowing exactly if and when 
-something breaks. A good read on the topic of test-driven development 
-is https://hackernoon.com/introduction-to-test-driven-development-tdd-61a13bc92d92. 
-Although writing tests before the code might seem strange at first, but it has very 
-clear upsides.
+## Configuration
 
-The template provides you with basic tests for the adapter startup and package files.
-It is recommended that you add your own tests into the mix.
+After installation, you need to configure the adapter:
 
-### Publishing the adapter
-Using GitHub Actions, you can enable automatic releases on npm whenever you push a new git tag that matches the form 
-`v<major>.<minor>.<patch>`. We **strongly recommend** that you do. The necessary steps are described in `.github/workflows/test-and-release.yml`.
+1. **Email**: Enter your Octopus Energy account email address
+2. **Password**: Enter your Octopus Energy account password
 
-Since you installed the release script, you can create a new
-release simply by calling:
-```bash
-npm run release
+The adapter will automatically authenticate and fetch your account data when started.
+
+## Data Structure
+
+The adapter creates the following object structure in ioBroker:
+
 ```
-Additional command line options for the release script are explained in the
-[release-script documentation](https://github.com/AlCalzone/release-script#command-line).
-
-To get your adapter released in ioBroker, please refer to the documentation 
-of [ioBroker.repositories](https://github.com/ioBroker/ioBroker.repositories#requirements-for-adapter-to-get-added-to-the-latest-repository).
-
-### Test the adapter manually with dev-server
-Since you set up `dev-server`, you can use it to run, test and debug your adapter.
-
-You may start `dev-server` by calling from your dev directory:
-```bash
-dev-server watch
+octopus-energy.0
+└── account_<ACCOUNT_NUMBER>
+    ├── balance                    # Current account balance in EUR
+    ├── info
+    │   ├── accountId              # Unique account identifier
+    │   ├── electricityBalance     # Electricity ledger balance
+    │   ├── gasBalance            # Gas ledger balance (if applicable)
+    │   ├── deviceCount           # Number of smart devices
+    │   └── rawData               # Complete API response as JSON
+    └── property_<PROPERTY_ID>
+        ├── address               # Property address
+        ├── electricity
+        │   └── malo_<MALO_NUMBER>
+        │       ├── mpan          # Meter Point Administration Number
+        │       ├── referenceConsumption  # Annual reference consumption
+        │       └── currentAgreement
+        │           ├── productCode       # Tariff product code
+        │           ├── productName       # Tariff product name
+        │           ├── isTimeOfUse      # Dynamic pricing indicator
+        │           ├── currentRate       # Current rate (ct/kWh)
+        │           └── timeOfUseRates   # Time-based rates (if applicable)
+        │               └── <TIME_SLOT>
+        │                   ├── rate      # Rate for this time slot
+        │                   ├── activeFrom # Start time
+        │                   └── activeTo   # End time
+        └── gas
+            └── malo_<MALO_NUMBER>
+                ├── mprn          # Meter Point Reference Number
+                └── currentAgreement
+                    └── ...       # Similar structure as electricity
 ```
 
-The ioBroker.admin interface will then be available at http://localhost:8081/
+## Available Data Points
 
-Please refer to the [`dev-server` documentation](https://github.com/ioBroker/dev-server#command-line) for more details.
+### Account Information
+- **balance**: Current account balance in EUR
+- **accountId**: Unique identifier for your Octopus Energy account
+- **electricityBalance**: Balance for electricity consumption
+- **gasBalance**: Balance for gas consumption (if applicable)
+- **deviceCount**: Number of connected smart devices
+
+### Property Information
+- **address**: Physical address of the property
+- **mpan/mprn**: Unique meter point identifiers
+
+### Tariff Information
+- **productCode**: Your current tariff code (e.g., "AGILE-FLEX-22-11-25")
+- **productName**: Human-readable tariff name
+- **isTimeOfUse**: Boolean indicating if you have a dynamic tariff
+- **currentRate**: Current electricity/gas rate in cents per kWh
+
+### Time-of-Use Rates (Dynamic Tariffs)
+For customers on dynamic tariffs like Agile Octopus:
+- **rate**: Price per kWh for specific time periods
+- **activeFrom/activeTo**: Time windows for each rate
+
+## Usage Examples
+
+### Example 1: Display Current Electricity Rate
+Create a visualization showing your current electricity rate:
+```javascript
+// Get current rate
+const currentRate = getState('octopus-energy.0.account_A-XXX.property_XXX.electricity.malo_XXX.currentAgreement.currentRate').val;
+console.log(`Current rate: ${currentRate} ct/kWh`);
+```
+
+### Example 2: Automation Based on Low Rates
+Automatically start high-consumption devices when electricity is cheapest:
+```javascript
+// Check if rate is below threshold
+on({id: 'octopus-energy.0.account_*.property_*.electricity.*.currentAgreement.currentRate', change: 'ne'}, function(obj) {
+    const rate = obj.state.val;
+    const threshold = 20; // cents per kWh
+
+    if (rate < threshold) {
+        // Start washing machine, charge EV, etc.
+        setState('washing-machine.start', true);
+    }
+});
+```
+
+### Example 3: Monitor Account Balance
+Send notification when account balance is low:
+```javascript
+on({id: 'octopus-energy.0.account_*.balance', change: 'ne'}, function(obj) {
+    const balance = obj.state.val;
+    if (balance < 50) {
+        sendTo('telegram', 'Your Octopus Energy balance is low: €' + balance);
+    }
+});
+```
+
+## Features
+
+### Real-Time Pricing
+Access current and forecast electricity rates, essential for optimizing consumption with dynamic tariffs.
+
+### Smart Meter Integration
+For customers with smart meters, the adapter provides detailed consumption data and patterns.
+
+### Multi-Property Support
+Manage multiple properties under one account, each with their own meters and tariffs.
+
+### Comprehensive Tariff Details
+Full visibility of your tariff structure including:
+- Standing charges
+- Unit rates
+- Time-of-use variations
+- VAT information
+
+## Troubleshooting
+
+### Authentication Failed
+- Verify your email and password are correct
+- Ensure you're using Octopus Energy Germany credentials
+- Check if your account is active and in good standing
+
+### No Data Retrieved
+- Check your internet connection
+- Verify the adapter is running (green light in admin interface)
+- Review the adapter log for error messages
+
+### Missing Properties or Meters
+- Ensure your account setup is complete on the Octopus Energy website
+- Some data may take time to appear after account activation
+
+## Support
+
+For issues, questions, or feature requests:
+- Check the [ioBroker forum](https://forum.iobroker.net/)
+- Report bugs on [GitHub](https://github.com/cyclist82/ioBroker.octopus-energy/issues)
+- Review Octopus Energy Germany [API documentation](https://api.oeg-kraken.energy/)
+
+## Disclaimer
+
+This adapter is not officially affiliated with or endorsed by Octopus Energy. It uses publicly available APIs to retrieve customer data. Use of this adapter is at your own risk.
+
+## Privacy & Security
+
+- Your credentials are stored locally in your ioBroker installation
+- The adapter only connects directly to Octopus Energy servers
+- No data is sent to third parties
+- Use strong passwords and keep your ioBroker installation secure
 
 ## Changelog
 <!--
@@ -114,7 +213,11 @@ Please refer to the [`dev-server` documentation](https://github.com/ioBroker/dev
 -->
 
 ### **WORK IN PROGRESS**
-* (Leif Lampater) initial release
+* (Leif Lampater) Enhanced comprehensive data fetching with detailed tariff information
+* (Leif Lampater) Added support for time-of-use rates and dynamic pricing
+* (Leif Lampater) Implemented proper error handling and retry logic
+* (Leif Lampater) Added info folder structure for better data organization
+* (Leif Lampater) Initial release with basic account and property data
 
 ## License
 MIT License
