@@ -218,8 +218,7 @@ This adapter is not officially affiliated with or endorsed by Octopus Energy. It
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
-
-### **WORK IN PROGRESS**
+### 0.0.1 (2025-09-27)
 * (Leif Lampater) Enhanced comprehensive data fetching with detailed tariff information
 * (Leif Lampater) Added support for time-of-use rates and dynamic pricing
 * (Leif Lampater) Implemented proper error handling and retry logic
