@@ -1,84 +1,103 @@
 {
-	"common": {
-		"name": "octopus-energy",
-		"version": "0.0.1",
-		"news": {
-			"0.0.1": {
-				"en": "initial release",
-				"de": "Erstveröffentlichung",
-				"ru": "Начальная версия",
-				"pt": "lançamento inicial",
-				"nl": "Eerste uitgave",
-				"fr": "Première version",
-				"it": "Versione iniziale",
-				"es": "Versión inicial",
-				"pl": "Pierwsze wydanie",
-				"uk": "Початкова версія",
-				"zh-cn": "首次出版"
-			}
-		},
-		"titleLang": {
-			"en": "octopus-energy",
-			"de": "Oktopus-Energie",
-			"ru": "Осьминог-энергия",
-			"pt": "Energia de polvo",
-			"nl": "octopus-energie",
-			"fr": "Octopus-Energy",
-			"it": "Octopus-Energy",
-			"es": "pulpo-energía",
-			"pl": "Energia ośmiornicy",
-			"uk": "восьминога-енергія",
-			"zh-cn": "章鱼能源"
-		},
-		"desc": {
-			"en": "connect octopus-energy API data to be used in ioBroker",
-			"de": "Verbinden Sie Octopus-Energie-API-Daten, die in IOBROKER verwendet werden sollen",
-			"ru": "Подключите данные API Octopus-Energy, которые будут использоваться в Iobroker",
-			"pt": "Conecte os dados da API de energia de polvo a serem usados ​​no iobroker",
-			"nl": "Verbind octopus-energy API-gegevens die moeten worden gebruikt in iobroker",
-			"fr": "Connectez les données API Octopus-Energy à utiliser dans IOBRoker",
-			"it": "Collega i dati API di Octopus-Energy da utilizzare in IoBroker",
-			"es": "Conecte los datos de la API de energía intopus-energía que se utilizarán en Iobroker",
-			"pl": "Połącz dane API Octopus-Energy, które mają być używane w IOBRAKER",
-			"uk": "Підключіть дані API Octopus-Energy для використання в iObroker",
-			"zh-cn": "连接章鱼能源API数据，用于iObroker"
-		},
-		"authors": ["Leif Lampater <leiflampater@gmail.com>"],
-		"keywords": ["octopus", "energy", "api"],
-		"licenseInformation": {
-			"type": "free",
-			"license": "MIT"
-		},
-		"platform": "Javascript/Node.js",
-		"icon": "octopus-energy.png",
-		"enabled": true,
-		"extIcon": "https://raw.githubusercontent.com/cyclist82/ioBroker.octopus-energy/main/admin/octopus-energy.png",
-		"readme": "https://github.com/cyclist82/ioBroker.octopus-energy/blob/main/README.md",
-		"loglevel": "info",
-		"tier": 3,
-		"mode": "daemon",
-		"type": "misc-data",
-		"compact": true,
-		"connectionType": "cloud",
-		"dataSource": "poll",
-		"adminUI": {
-			"config": "json"
-		},
-		"dependencies": [
-			{
-				"js-controller": ">=6.0.11"
-			}
-		],
-		"globalDependencies": [
-			{
-				"admin": ">=7.6.17"
-			}
-		]
-	},
-	"native": {
-		"email": "",
-		"password": ""
-	},
-	"objects": [],
-	"instanceObjects": []
+  "common": {
+    "name": "octopus-energy",
+    "version": "0.0.2",
+    "news": {
+      "0.0.2": {
+        "en": "Enhanced comprehensive data fetching with detailed tariff information\nAdded support for time-of-use rates and dynamic pricing\nImplemented proper error handling and retry logic\nAdded info folder structure for better data organization\nInitial release with basic account and property data",
+        "de": "Verbesserte umfassende Datenerfassung mit detaillierten Tarifinformationen\nUnterstützung für Nutzungsdauern und dynamische Preise\nErgänzte ordnungsgemäße Fehlerbehandlung und Wiederaufnahmelogik\nZusätzliche Info-Ordnerstruktur für bessere Datenorganisation\nErste Veröffentlichung mit Basis-Konto- und Eigentumsdaten",
+        "ru": "Усовершенствованные комплексные данные с подробной информацией о тарифах\nДобавлена поддержка сроков использования и динамического ценообразования\nРеализована правильная обработка ошибок и логика повторного использования\nДобавлена структура папки информации для лучшей организации данных\nПервоначальный выпуск с базовой учетной записью и данными о собственности",
+        "pt": "Maior recolha de dados abrangentes com informações tarifárias detalhadas\nAdicionado suporte para taxas de tempo de uso e preços dinâmicos\nImplementação da lógica de manipulação e repetição de erros\nEstrutura de pastas de informação adicionada para melhor organização de dados\nLançamento inicial com dados básicos de conta e propriedade",
+        "nl": "Verbeterde uitgebreide gegevensverzameling met gedetailleerde tariefinformatie\nToegevoegde steun voor gebruikstijden en dynamische prijzen\nGeïmplementeerde juiste foutafhandeling en retry logica\nToegevoegd info map structuur voor een betere data organisatie\nEerste release met basisrekening en eigendomsgegevens",
+        "fr": "Amélioration de la collecte de données complètes avec des renseignements tarifaires détaillés\nAjout d'un soutien aux taux de temps d'utilisation et aux prix dynamiques\nMise en œuvre d'une bonne gestion des erreurs et réessayer la logique\nAjout de la structure du dossier info pour une meilleure organisation des données\nLibération initiale avec données de base sur le compte et les biens",
+        "it": "Ottenuta raccolta di dati completa con informazioni tariffarie dettagliate\nAggiunto il supporto per i tassi di utilizzo e i prezzi dinamici\nGestione corretta degli errori e logiche di riprovazione\nAggiunta struttura della cartella di informazioni per una migliore organizzazione dei dati\nRilasciazione iniziale con conto di base e dati di proprietà",
+        "es": "Mejoramiento de datos completos con información arancelaria detallada\nApoyo añadido a las tasas de uso y precios dinámicos\nImplementado adecuado manejo de errores y lógica de reingreso\nEstructura de carpeta de información adicional para una mejor organización de datos\nPublicación inicial con datos básicos de cuenta y propiedad",
+        "pl": "Wzmocnione wyczerpujące dane gromadzące szczegółowe informacje taryfowe\nDodano wsparcie dla stawek czasowych i cen dynamicznych\nWdrożenie prawidłowej obsługi błędów i powtórnej logiki\nDodano strukturę folderów informacyjnych dla lepszej organizacji danych\nPoczątkowe wydanie z podstawowymi danymi dotyczącymi konta i nieruchomości",
+        "uk": "Розширений комплексний аналіз даних з детальною інформацією про тариф\nДодана підтримка своєчасних ставок та динамічних цін\nРеалізовано належну логіку обробки помилок та ретри\nДодано структуру папки для кращої організації даних\nПочатковий випуск з основними обліковими записами та даними про майно",
+        "zh-cn": "利用详细关税信息收集的全面数据得到加强\n增加使用时间率和动态定价支持\n执行正确的错误处理和重试逻辑\n为更好的数据组织而添加的信息文件夹结构\n附有基本账户和财产数据的初步发布"
+      },
+      "0.0.1": {
+        "en": "initial release",
+        "de": "Erstveröffentlichung",
+        "ru": "Начальная версия",
+        "pt": "lançamento inicial",
+        "nl": "Eerste uitgave",
+        "fr": "Première version",
+        "it": "Versione iniziale",
+        "es": "Versión inicial",
+        "pl": "Pierwsze wydanie",
+        "uk": "Початкова версія",
+        "zh-cn": "首次出版"
+      }
+    },
+    "titleLang": {
+      "en": "octopus-energy",
+      "de": "Oktopus-Energie",
+      "ru": "Осьминог-энергия",
+      "pt": "Energia de polvo",
+      "nl": "octopus-energie",
+      "fr": "Octopus-Energy",
+      "it": "Octopus-Energy",
+      "es": "pulpo-energía",
+      "pl": "Energia ośmiornicy",
+      "uk": "восьминога-енергія",
+      "zh-cn": "章鱼能源"
+    },
+    "desc": {
+      "en": "connect octopus-energy API data to be used in ioBroker",
+      "de": "Verbinden Sie Octopus-Energie-API-Daten, die in IOBROKER verwendet werden sollen",
+      "ru": "Подключите данные API Octopus-Energy, которые будут использоваться в Iobroker",
+      "pt": "Conecte os dados da API de energia de polvo a serem usados ​​no iobroker",
+      "nl": "Verbind octopus-energy API-gegevens die moeten worden gebruikt in iobroker",
+      "fr": "Connectez les données API Octopus-Energy à utiliser dans IOBRoker",
+      "it": "Collega i dati API di Octopus-Energy da utilizzare in IoBroker",
+      "es": "Conecte los datos de la API de energía intopus-energía que se utilizarán en Iobroker",
+      "pl": "Połącz dane API Octopus-Energy, które mają być używane w IOBRAKER",
+      "uk": "Підключіть дані API Octopus-Energy для використання в iObroker",
+      "zh-cn": "连接章鱼能源API数据，用于iObroker"
+    },
+    "authors": [
+      "Leif Lampater <leiflampater@gmail.com>"
+    ],
+    "keywords": [
+      "octopus",
+      "energy",
+      "api"
+    ],
+    "licenseInformation": {
+      "type": "free",
+      "license": "MIT"
+    },
+    "platform": "Javascript/Node.js",
+    "icon": "octopus-energy.png",
+    "enabled": true,
+    "extIcon": "https://raw.githubusercontent.com/cyclist82/ioBroker.octopus-energy/main/admin/octopus-energy.png",
+    "readme": "https://github.com/cyclist82/ioBroker.octopus-energy/blob/main/README.md",
+    "loglevel": "info",
+    "tier": 3,
+    "mode": "daemon",
+    "type": "misc-data",
+    "compact": true,
+    "connectionType": "cloud",
+    "dataSource": "poll",
+    "adminUI": {
+      "config": "json"
+    },
+    "dependencies": [
+      {
+        "js-controller": ">=6.0.11"
+      }
+    ],
+    "globalDependencies": [
+      {
+        "admin": ">=7.6.17"
+      }
+    ]
+  },
+  "native": {
+    "email": "",
+    "password": ""
+  },
+  "objects": [],
+  "instanceObjects": []
 }
