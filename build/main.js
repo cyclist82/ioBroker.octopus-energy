@@ -22,10 +22,13 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 var utils = __toESM(require("@iobroker/adapter-core"));
+var import_node_cron = require("node-cron");
 var import_octopus_api = require("./lib/octopus-api");
 class OctopusEnergy extends utils.Adapter {
   apiClient = null;
   accounts = [];
+  readingsUpdateCron = null;
+  dailyUpdateCron = null;
   constructor(options = {}) {
     super({
       ...options,
@@ -59,6 +62,8 @@ class OctopusEnergy extends utils.Adapter {
       this.log.info(`Found ${this.accounts.length} account(s)`);
       await this.createAccountStructures();
       await this.fetchAccountData();
+      this.scheduleMeterReadingsUpdates();
+      this.scheduleDailyUpdates();
     } catch (error) {
       this.log.error(`Failed to initialize adapter: ${error.message}`);
     }
@@ -68,6 +73,14 @@ class OctopusEnergy extends utils.Adapter {
    */
   onUnload(callback) {
     try {
+      if (this.readingsUpdateCron) {
+        this.readingsUpdateCron.stop();
+        this.readingsUpdateCron = null;
+      }
+      if (this.dailyUpdateCron) {
+        this.dailyUpdateCron.stop();
+        this.dailyUpdateCron = null;
+      }
       callback();
     } catch (e) {
       callback();
@@ -361,18 +374,21 @@ class OctopusEnergy extends utils.Adapter {
                       const rateInfo = currentAgreement.unitRateInformation;
                       if (rateInfo.__typename === "SimpleProductUnitRateInformation") {
                         if (rateInfo.latestGrossUnitRateCentsPerKwh !== void 0) {
-                          await this.setObjectNotExistsAsync(`${agreementFolder}.currentRate`, {
-                            type: "state",
-                            common: {
-                              name: "Current Rate",
-                              type: "number",
-                              role: "value.price",
-                              unit: "ct/kWh",
-                              read: true,
-                              write: false
-                            },
-                            native: {}
-                          });
+                          await this.setObjectNotExistsAsync(
+                            `${agreementFolder}.currentRate`,
+                            {
+                              type: "state",
+                              common: {
+                                name: "Current Rate",
+                                type: "number",
+                                role: "value.price",
+                                unit: "ct/kWh",
+                                read: true,
+                                write: false
+                              },
+                              native: {}
+                            }
+                          );
                           await this.setState(`${agreementFolder}.currentRate`, {
                             val: rateInfo.latestGrossUnitRateCentsPerKwh / 100,
                             ack: true
@@ -644,6 +660,213 @@ class OctopusEnergy extends utils.Adapter {
         }
       } catch (error) {
         this.log.error(`Failed to fetch data for account ${account.accountNumber}: ${error.message}`);
+      }
+    }
+  }
+  /**
+   * Schedule meter readings updates at 0, 15, 30, 45 minutes of every hour
+   */
+  scheduleMeterReadingsUpdates() {
+    const cronPattern = "0,15,30,45 * * * *";
+    this.log.info(
+      "Scheduling meter readings updates at 0, 15, 30, and 45 minutes of every hour (with random delay)"
+    );
+    this.readingsUpdateCron = (0, import_node_cron.schedule)(
+      cronPattern,
+      () => {
+        const randomDelay = Math.floor(Math.random() * 3e5);
+        const delayMinutes = (randomDelay / 6e4).toFixed(1);
+        this.log.debug(`Meter readings update triggered, waiting ${delayMinutes} minutes before execution`);
+        setTimeout(() => {
+          this.updateMeterReadings();
+        }, randomDelay);
+      },
+      {
+        timezone: "Europe/Berlin"
+        // Use German timezone for Octopus Energy Germany
+      }
+    );
+    this.readingsUpdateCron.start();
+  }
+  /**
+   * Schedule daily updates for everything else (balance, rates, etc.) after midnight
+   */
+  scheduleDailyUpdates() {
+    const cronPattern = "0 0 * * *";
+    this.log.info("Scheduling daily comprehensive updates at midnight (with 0-15 min random delay)");
+    this.dailyUpdateCron = (0, import_node_cron.schedule)(
+      cronPattern,
+      () => {
+        const randomDelay = Math.floor(Math.random() * 9e5);
+        const delayMinutes = (randomDelay / 6e4).toFixed(1);
+        this.log.debug(`Daily update triggered at midnight, waiting ${delayMinutes} minutes before execution`);
+        setTimeout(() => {
+          this.updateComprehensiveData();
+        }, randomDelay);
+      },
+      {
+        timezone: "Europe/Berlin"
+        // Use German timezone for Octopus Energy Germany
+      }
+    );
+    this.dailyUpdateCron.start();
+    const initialDelay = 5e3 + Math.floor(Math.random() * 1e4);
+    setTimeout(() => {
+      this.log.info("Running initial comprehensive data update");
+      this.updateComprehensiveData();
+    }, initialDelay);
+  }
+  /**
+   * Update only meter readings for all accounts (runs every 15 minutes)
+   */
+  async updateMeterReadings() {
+    var _a;
+    if (!this.apiClient) {
+      this.log.warn("API client not initialized, skipping meter readings update");
+      return;
+    }
+    this.log.info("Updating meter readings...");
+    for (const account of this.accounts) {
+      try {
+        const accountFolder = `account_${account.accountNumber}`;
+        const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+        const comprehensiveData = await this.apiClient.getComprehensiveData(account.accountNumber);
+        if ((_a = comprehensiveData == null ? void 0 : comprehensiveData.account) == null ? void 0 : _a.allProperties) {
+          for (const property of comprehensiveData.account.allProperties) {
+            const propertyFolder = `${accountFolder}.property_${property.id}`;
+            try {
+              const readings = await this.apiClient.getSmartMeterReadings(
+                account.accountNumber,
+                property.id,
+                today
+              );
+              if (readings.length > 0) {
+                await this.setState(`${propertyFolder}.electricity.readings`, {
+                  val: JSON.stringify(readings),
+                  ack: true
+                });
+                this.log.debug(`Updated ${readings.length} smart meter readings for property ${property.id}`);
+              }
+            } catch (error) {
+              this.log.debug(`Failed to fetch smart meter readings for property ${property.id}: ${error.message}`);
+            }
+          }
+        }
+        this.log.info(`Successfully updated meter readings for account ${account.accountNumber}`);
+      } catch (error) {
+        this.log.error(
+          `Failed to update meter readings for account ${account.accountNumber}: ${error.message}`
+        );
+      }
+    }
+  }
+  /**
+   * Update comprehensive data including balance, rates, and device info (runs once daily)
+   */
+  async updateComprehensiveData() {
+    var _a, _b, _c, _d, _e, _f, _g, _h;
+    if (!this.apiClient) {
+      this.log.warn("API client not initialized, skipping comprehensive update");
+      return;
+    }
+    this.log.info("Updating comprehensive data (balance, rates, devices)...");
+    for (const account of this.accounts) {
+      try {
+        const accountFolder = `account_${account.accountNumber}`;
+        const comprehensiveData = await this.apiClient.getComprehensiveData(account.accountNumber);
+        if (comprehensiveData == null ? void 0 : comprehensiveData.account) {
+          const accountData = comprehensiveData.account;
+          const electricityLedger = (_a = accountData.ledgers) == null ? void 0 : _a.find(
+            (l) => l.ledgerType === "ELECTRICITY_LEDGER"
+          );
+          if (electricityLedger) {
+            await this.setState(`${accountFolder}.balance`, {
+              val: electricityLedger.balance || 0,
+              ack: true
+            });
+          }
+          if (accountData.ledgers) {
+            for (const ledger of accountData.ledgers) {
+              const ledgerType = ((_b = ledger.ledgerType) == null ? void 0 : _b.toLowerCase().replace("_ledger", "")) || "unknown";
+              await this.setState(`${accountFolder}.info.${ledgerType}Balance`, {
+                val: ledger.balance || 0,
+                ack: true
+              });
+            }
+          }
+          if (accountData.allProperties) {
+            for (const property of accountData.allProperties) {
+              const propertyFolder = `${accountFolder}.property_${property.id}`;
+              if (((_c = property.electricityMalos) == null ? void 0 : _c.length) > 0) {
+                for (const malo of property.electricityMalos) {
+                  const maloFolder = `${propertyFolder}.electricity.malo_${malo.maloNumber}`;
+                  if (((_d = malo.agreements) == null ? void 0 : _d.length) > 0) {
+                    const currentAgreement = malo.agreements[0];
+                    const agreementFolder = `${maloFolder}.currentAgreement`;
+                    if (currentAgreement.unitRateInformation) {
+                      const rateInfo = currentAgreement.unitRateInformation;
+                      if (rateInfo.__typename === "SimpleProductUnitRateInformation" && rateInfo.latestGrossUnitRateCentsPerKwh !== void 0) {
+                        await this.setState(`${agreementFolder}.currentRate`, {
+                          val: rateInfo.latestGrossUnitRateCentsPerKwh / 100,
+                          ack: true
+                        });
+                        this.log.debug(
+                          `Updated electricity rate for ${malo.maloNumber}: ${(rateInfo.latestGrossUnitRateCentsPerKwh / 100).toFixed(2)} ct/kWh`
+                        );
+                      } else if (rateInfo.__typename === "TimeOfUseProductUnitRateInformation" && rateInfo.rates) {
+                        const ratesFolder = `${agreementFolder}.timeOfUseRates`;
+                        for (const rate of rateInfo.rates) {
+                          const slotName = rate.timeslotName || "unknown";
+                          const slotFolder = `${ratesFolder}.${slotName.toLowerCase().replace(/\s+/g, "_")}`;
+                          if (rate.latestGrossUnitRateCentsPerKwh !== void 0) {
+                            await this.setState(`${slotFolder}.rate`, {
+                              val: rate.latestGrossUnitRateCentsPerKwh / 100,
+                              ack: true
+                            });
+                            this.log.debug(
+                              `Updated ${slotName} rate: ${(rate.latestGrossUnitRateCentsPerKwh / 100).toFixed(2)} ct/kWh`
+                            );
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+              if (((_e = property.gasMalos) == null ? void 0 : _e.length) > 0) {
+                for (const malo of property.gasMalos) {
+                  const maloFolder = `${propertyFolder}.gas.malo_${malo.maloNumber}`;
+                  if (((_f = malo.agreements) == null ? void 0 : _f.length) > 0) {
+                    const currentAgreement = malo.agreements[0];
+                    const agreementFolder = `${maloFolder}.currentAgreement`;
+                    if (((_g = currentAgreement.unitRateInformation) == null ? void 0 : _g.__typename) === "SimpleProductUnitRateInformation" && currentAgreement.unitRateInformation.latestGrossUnitRateCentsPerKwh !== void 0) {
+                      await this.setState(`${agreementFolder}.currentRate`, {
+                        val: currentAgreement.unitRateInformation.latestGrossUnitRateCentsPerKwh / 100,
+                        ack: true
+                      });
+                      this.log.debug(
+                        `Updated gas rate for ${malo.maloNumber}: ${(currentAgreement.unitRateInformation.latestGrossUnitRateCentsPerKwh / 100).toFixed(2)} ct/kWh`
+                      );
+                    }
+                  }
+                }
+              }
+            }
+          }
+          await this.setState(`${accountFolder}.info.deviceCount`, {
+            val: ((_h = comprehensiveData.devices) == null ? void 0 : _h.length) || 0,
+            ack: true
+          });
+          await this.setState(`${accountFolder}.info.rawData`, {
+            val: JSON.stringify(comprehensiveData),
+            ack: true
+          });
+        }
+        this.log.info(`Successfully updated comprehensive data for account ${account.accountNumber}`);
+      } catch (error) {
+        this.log.error(
+          `Failed to update comprehensive data for account ${account.accountNumber}: ${error.message}`
+        );
       }
     }
   }
