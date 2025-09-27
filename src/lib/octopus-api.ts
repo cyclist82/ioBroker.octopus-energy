@@ -375,7 +375,7 @@ export class OctopusApiClient {
 												serialNumber: malo.meter.number,
 												makeAndType: malo.meter.meterType,
 											},
-									  ]
+										]
 									: [],
 								agreements: malo.agreements || [],
 							})) || [],
@@ -390,7 +390,7 @@ export class OctopusApiClient {
 												serialNumber: malo.meter.number,
 												makeAndType: malo.meter.meterType,
 											},
-									  ]
+										]
 									: [],
 								agreements: malo.agreements || [],
 							})) || [],
