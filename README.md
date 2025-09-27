@@ -188,12 +188,19 @@ Full visibility of your tariff structure including:
 - Ensure your account setup is complete on the Octopus Energy website
 - Some data may take time to appear after account activation
 
+## API Support
+
+For API-related questions and integration details, consult the official Octopus Energy developer documentation:
+- **REST API**: [https://developer.oeg-kraken.energy/](https://developer.oeg-kraken.energy/)
+- **GraphQL API**: [https://developer.oeg-kraken.energy/graphql/](https://developer.oeg-kraken.energy/graphql/)
+
+For client-specific issues, please check the adapter code and error messages for troubleshooting guidance.
+
 ## Support
 
 For issues, questions, or feature requests:
 - Check the [ioBroker forum](https://forum.iobroker.net/)
 - Report bugs on [GitHub](https://github.com/cyclist82/ioBroker.octopus-energy/issues)
-- Review Octopus Energy Germany [API documentation](https://api.oeg-kraken.energy/)
 
 ## Disclaimer
 
