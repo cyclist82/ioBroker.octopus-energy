@@ -1,4 +1,5 @@
 ![Logo](admin/octopus-energy.png)
+
 # ioBroker.octopus-energy
 
 [![NPM version](https://img.shields.io/npm/v/iobroker.octopus-energy.svg)](https://www.npmjs.com/package/iobroker.octopus-energy)
@@ -17,6 +18,7 @@ This adapter connects to the Octopus Energy Germany API to integrate your energy
 ## Overview
 
 The Octopus Energy adapter for ioBroker enables you to:
+
 - 📊 Monitor your current account balance and energy consumption
 - 💡 Access real-time electricity and gas tariff rates
 - ⚡ View time-of-use rates for dynamic tariffs like Agile Octopus
@@ -27,6 +29,7 @@ The Octopus Energy adapter for ioBroker enables you to:
 ## Prerequisites
 
 To use this adapter, you need:
+
 - An active Octopus Energy Germany account
 - Your Octopus Energy login credentials (email and password)
 - ioBroker installation (version 5.0.0 or higher recommended)
@@ -97,6 +100,7 @@ octopus-energy.0
 ## Available Data Points
 
 ### Account Information
+
 - **balance**: Current account balance in EUR
 - **accountId**: Unique identifier for your Octopus Energy account
 - **electricityBalance**: Balance for electricity consumption
@@ -104,69 +108,89 @@ octopus-energy.0
 - **deviceCount**: Number of connected smart devices
 
 ### Property Information
+
 - **address**: Physical address of the property
 - **mpan/mprn**: Unique meter point identifiers
 
 ### Tariff Information
+
 - **productCode**: Your current tariff code (e.g., "AGILE-FLEX-22-11-25")
 - **productName**: Human-readable tariff name
 - **isTimeOfUse**: Boolean indicating if you have a dynamic tariff
 - **currentRate**: Current electricity/gas rate in cents per kWh
 
 ### Time-of-Use Rates (Dynamic Tariffs)
+
 For customers on dynamic tariffs like Agile Octopus:
+
 - **rate**: Price per kWh for specific time periods
 - **activeFrom/activeTo**: Time windows for each rate
 
 ## Usage Examples
 
 ### Example 1: Display Current Electricity Rate
+
 Create a visualization showing your current electricity rate:
+
 ```javascript
 // Get current rate
-const currentRate = getState('octopus-energy.0.account_A-XXX.property_XXX.electricity.malo_XXX.currentAgreement.currentRate').val;
+const currentRate = getState(
+	'octopus-energy.0.account_A-XXX.property_XXX.electricity.malo_XXX.currentAgreement.currentRate',
+).val;
 console.log(`Current rate: ${currentRate} ct/kWh`);
 ```
 
 ### Example 2: Automation Based on Low Rates
+
 Automatically start high-consumption devices when electricity is cheapest:
+
 ```javascript
 // Check if rate is below threshold
-on({id: 'octopus-energy.0.account_*.property_*.electricity.*.currentAgreement.currentRate', change: 'ne'}, function(obj) {
-    const rate = obj.state.val;
-    const threshold = 20; // cents per kWh
+on(
+	{ id: 'octopus-energy.0.account_*.property_*.electricity.*.currentAgreement.currentRate', change: 'ne' },
+	function (obj) {
+		const rate = obj.state.val;
+		const threshold = 20; // cents per kWh
 
-    if (rate < threshold) {
-        // Start washing machine, charge EV, etc.
-        setState('washing-machine.start', true);
-    }
-});
+		if (rate < threshold) {
+			// Start washing machine, charge EV, etc.
+			setState('washing-machine.start', true);
+		}
+	},
+);
 ```
 
 ### Example 3: Monitor Account Balance
+
 Send notification when account balance is low:
+
 ```javascript
-on({id: 'octopus-energy.0.account_*.balance', change: 'ne'}, function(obj) {
-    const balance = obj.state.val;
-    if (balance < 50) {
-        sendTo('telegram', 'Your Octopus Energy balance is low: €' + balance);
-    }
+on({ id: 'octopus-energy.0.account_*.balance', change: 'ne' }, function (obj) {
+	const balance = obj.state.val;
+	if (balance < 50) {
+		sendTo('telegram', 'Your Octopus Energy balance is low: €' + balance);
+	}
 });
 ```
 
 ## Features
 
 ### Real-Time Pricing
+
 Access current and forecast electricity rates, essential for optimizing consumption with dynamic tariffs.
 
 ### Smart Meter Integration
+
 For customers with smart meters, the adapter provides detailed consumption data and patterns.
 
 ### Multi-Property Support
+
 Manage multiple properties under one account, each with their own meters and tariffs.
 
 ### Comprehensive Tariff Details
+
 Full visibility of your tariff structure including:
+
 - Standing charges
 - Unit rates
 - Time-of-use variations
@@ -175,22 +199,26 @@ Full visibility of your tariff structure including:
 ## Troubleshooting
 
 ### Authentication Failed
+
 - Verify your email and password are correct
 - Ensure you're using Octopus Energy Germany credentials
 - Check if your account is active and in good standing
 
 ### No Data Retrieved
+
 - Check your internet connection
 - Verify the adapter is running (green light in admin interface)
 - Review the adapter log for error messages
 
 ### Missing Properties or Meters
+
 - Ensure your account setup is complete on the Octopus Energy website
 - Some data may take time to appear after account activation
 
 ## API Support
 
 For API-related questions and integration details, consult the official Octopus Energy developer documentation:
+
 - **REST API**: [https://developer.oeg-kraken.energy/](https://developer.oeg-kraken.energy/)
 - **GraphQL API**: [https://developer.oeg-kraken.energy/graphql/](https://developer.oeg-kraken.energy/graphql/)
 
@@ -199,6 +227,7 @@ For client-specific issues, please check the adapter code and error messages for
 ## Support
 
 For issues, questions, or feature requests:
+
 - Check the [ioBroker forum](https://forum.iobroker.net/)
 - Report bugs on [GitHub](https://github.com/cyclist82/ioBroker.octopus-energy/issues)
 
@@ -214,18 +243,22 @@ This adapter is not officially affiliated with or endorsed by Octopus Energy. It
 - Use strong passwords and keep your ioBroker installation secure
 
 ## Changelog
+
 <!--
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
-### 0.0.1 (2025-09-27)
-* (Leif Lampater) Enhanced comprehensive data fetching with detailed tariff information
-* (Leif Lampater) Added support for time-of-use rates and dynamic pricing
-* (Leif Lampater) Implemented proper error handling and retry logic
-* (Leif Lampater) Added info folder structure for better data organization
-* (Leif Lampater) Initial release with basic account and property data
+
+### 0.0.2 (2025-09-27)
+
+- (Leif Lampater) Enhanced comprehensive data fetching with detailed tariff information
+- (Leif Lampater) Added support for time-of-use rates and dynamic pricing
+- (Leif Lampater) Implemented proper error handling and retry logic
+- (Leif Lampater) Added info folder structure for better data organization
+- (Leif Lampater) Initial release with basic account and property data
 
 ## License
+
 MIT License
 
 Copyright (c) 2025 Leif Lampater <leiflampater@gmail.com>
