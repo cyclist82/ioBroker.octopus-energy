@@ -248,7 +248,7 @@ This adapter is not officially affiliated with or endorsed by Octopus Energy. It
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
-### **WORK IN PROGRESS**
+### 0.0.3 (2025-09-28)
 
 - (Leif Lampater) Added lastUpdate state to track when prices were last updated
 - (Leif Lampater) Moved @iobroker/types to dependencies for proper runtime support

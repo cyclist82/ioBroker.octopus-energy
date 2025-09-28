@@ -1,90 +1,103 @@
 {
-	"common": {
-		"name": "octopus-energy",
-		"version": "0.0.2",
-		"news": {
-			"0.0.1": {
-				"en": "initial release",
-				"de": "Erstveröffentlichung",
-				"ru": "Начальная версия",
-				"pt": "lançamento inicial",
-				"nl": "Eerste uitgave",
-				"fr": "Première version",
-				"it": "Versione iniziale",
-				"es": "Versión inicial",
-				"pl": "Pierwsze wydanie",
-				"uk": "Початкова версія",
-				"zh-cn": "首次出版"
-			}
-		},
-		"titleLang": {
-			"en": "octopus-energy",
-			"de": "Oktopus-Energie",
-			"ru": "Осьминог-энергия",
-			"pt": "Energia de polvo",
-			"nl": "octopus-energie",
-			"fr": "Octopus-Energy",
-			"it": "Octopus-Energy",
-			"es": "pulpo-energía",
-			"pl": "Energia ośmiornicy",
-			"uk": "восьминога-енергія",
-			"zh-cn": "章鱼能源"
-		},
-		"desc": {
-			"en": "connect octopus-energy API data to be used in ioBroker",
-			"de": "Verbinden Sie Octopus-Energie-API-Daten, die in IOBROKER verwendet werden sollen",
-			"ru": "Подключите данные API Octopus-Energy, которые будут использоваться в Iobroker",
-			"pt": "Conecte os dados da API de energia de polvo a serem usados ​​no iobroker",
-			"nl": "Verbind octopus-energy API-gegevens die moeten worden gebruikt in iobroker",
-			"fr": "Connectez les données API Octopus-Energy à utiliser dans IOBRoker",
-			"it": "Collega i dati API di Octopus-Energy da utilizzare in IoBroker",
-			"es": "Conecte los datos de la API de energía intopus-energía que se utilizarán en Iobroker",
-			"pl": "Połącz dane API Octopus-Energy, które mają być używane w IOBRAKER",
-			"uk": "Підключіть дані API Octopus-Energy для використання в iObroker",
-			"zh-cn": "连接章鱼能源API数据，用于iObroker"
-		},
-		"authors": [
-			"Leif Lampater <leiflampater@gmail.com>"
-		],
-		"keywords": [
-			"octopus",
-			"energy",
-			"api"
-		],
-		"licenseInformation": {
-			"type": "free",
-			"license": "MIT"
-		},
-		"platform": "Javascript/Node.js",
-		"icon": "octopus-energy.png",
-		"enabled": true,
-		"extIcon": "https://raw.githubusercontent.com/cyclist82/ioBroker.octopus-energy/main/admin/octopus-energy.png",
-		"readme": "https://github.com/cyclist82/ioBroker.octopus-energy/blob/main/README.md",
-		"loglevel": "info",
-		"tier": 3,
-		"mode": "daemon",
-		"type": "misc-data",
-		"compact": true,
-		"connectionType": "cloud",
-		"dataSource": "poll",
-		"adminUI": {
-			"config": "json"
-		},
-		"dependencies": [
-			{
-				"js-controller": ">=6.0.11"
-			}
-		],
-		"globalDependencies": [
-			{
-				"admin": ">=7.6.17"
-			}
-		]
-	},
-	"native": {
-		"email": "",
-		"password": ""
-	},
-	"objects": [],
-	"instanceObjects": []
+  "common": {
+    "name": "octopus-energy",
+    "version": "0.0.3",
+    "news": {
+      "0.0.3": {
+        "en": "Added lastUpdate state to track when prices were last updated\nMoved @iobroker/types to dependencies for proper runtime support",
+        "de": "Hinzugefügt lastUpdate Zustand zu verfolgen, wann die Preise zuletzt aktualisiert wurden\n@iobroker/Typen auf Abhängigkeiten für die richtige Laufzeitunterstützung verschoben",
+        "ru": "Добавлено состояние LastUpdate для отслеживания, когда в последний раз обновлялись цены\nПеренесенные @iobroker/типы в зависимости от правильной поддержки среды выполнения",
+        "pt": "Adicionado último estado de atualização para rastrear quando os preços foram atualizados pela última vez\nMoveu @iobroker/types para dependências para suporte adequado em tempo de execução",
+        "nl": "Laatste update staat toegevoegd om te volgen wanneer de prijzen voor het laatst zijn bijgewerkt\nVerplaatste @iobroker/types naar afhankelijkheden voor juiste runtime ondersteuning",
+        "fr": "Ajout de la dernière mise à jour pour suivre la dernière mise à jour des prix\nDéplacer @iobroker/types vers des dépendances pour un support d'exécution approprié",
+        "it": "Aggiunto ultimo aggiornamento stato per tenere traccia quando i prezzi sono stati aggiornati\nSpostato @iobroker/tipi alle dipendenze per un adeguato supporto runtime",
+        "es": "Estado de última actualización a seguir cuando los precios fueron actualizados por última vez\nMovido @iobroker/tipos a las dependencias para el apoyo adecuado en tiempo de ejecución",
+        "pl": "Dodano lastAktualizacja stanu do śledzenia, kiedy ceny były ostatnio aktualizowane\nPrzeniesiony @ iobroker / typy do zależności dla odpowiedniego wsparcia runtime",
+        "uk": "Додано останнійОновний стан для відстеження, коли ціни оновлено останнім часом\nПоведінка @iobroker/types для належної підтримки часу виконання",
+        "zh-cn": "添加上一个更新日期状态以跟踪上次更新价格的时间\n将 @ iobroduc/ types 移动到依赖区, 以获得适当的运行时间支持"
+      },
+      "0.0.1": {
+        "en": "initial release",
+        "de": "Erstveröffentlichung",
+        "ru": "Начальная версия",
+        "pt": "lançamento inicial",
+        "nl": "Eerste uitgave",
+        "fr": "Première version",
+        "it": "Versione iniziale",
+        "es": "Versión inicial",
+        "pl": "Pierwsze wydanie",
+        "uk": "Початкова версія",
+        "zh-cn": "首次出版"
+      }
+    },
+    "titleLang": {
+      "en": "octopus-energy",
+      "de": "Oktopus-Energie",
+      "ru": "Осьминог-энергия",
+      "pt": "Energia de polvo",
+      "nl": "octopus-energie",
+      "fr": "Octopus-Energy",
+      "it": "Octopus-Energy",
+      "es": "pulpo-energía",
+      "pl": "Energia ośmiornicy",
+      "uk": "восьминога-енергія",
+      "zh-cn": "章鱼能源"
+    },
+    "desc": {
+      "en": "connect octopus-energy API data to be used in ioBroker",
+      "de": "Verbinden Sie Octopus-Energie-API-Daten, die in IOBROKER verwendet werden sollen",
+      "ru": "Подключите данные API Octopus-Energy, которые будут использоваться в Iobroker",
+      "pt": "Conecte os dados da API de energia de polvo a serem usados ​​no iobroker",
+      "nl": "Verbind octopus-energy API-gegevens die moeten worden gebruikt in iobroker",
+      "fr": "Connectez les données API Octopus-Energy à utiliser dans IOBRoker",
+      "it": "Collega i dati API di Octopus-Energy da utilizzare in IoBroker",
+      "es": "Conecte los datos de la API de energía intopus-energía que se utilizarán en Iobroker",
+      "pl": "Połącz dane API Octopus-Energy, które mają być używane w IOBRAKER",
+      "uk": "Підключіть дані API Octopus-Energy для використання в iObroker",
+      "zh-cn": "连接章鱼能源API数据，用于iObroker"
+    },
+    "authors": [
+      "Leif Lampater <leiflampater@gmail.com>"
+    ],
+    "keywords": [
+      "octopus",
+      "energy",
+      "api"
+    ],
+    "licenseInformation": {
+      "type": "free",
+      "license": "MIT"
+    },
+    "platform": "Javascript/Node.js",
+    "icon": "octopus-energy.png",
+    "enabled": true,
+    "extIcon": "https://raw.githubusercontent.com/cyclist82/ioBroker.octopus-energy/main/admin/octopus-energy.png",
+    "readme": "https://github.com/cyclist82/ioBroker.octopus-energy/blob/main/README.md",
+    "loglevel": "info",
+    "tier": 3,
+    "mode": "daemon",
+    "type": "misc-data",
+    "compact": true,
+    "connectionType": "cloud",
+    "dataSource": "poll",
+    "adminUI": {
+      "config": "json"
+    },
+    "dependencies": [
+      {
+        "js-controller": ">=6.0.11"
+      }
+    ],
+    "globalDependencies": [
+      {
+        "admin": ">=7.6.17"
+      }
+    ]
+  },
+  "native": {
+    "email": "",
+    "password": ""
+  },
+  "objects": [],
+  "instanceObjects": []
 }
