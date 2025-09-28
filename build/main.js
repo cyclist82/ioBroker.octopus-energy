@@ -136,6 +136,17 @@ class OctopusEnergy extends utils.Adapter {
         native: {}
       });
       await this.setState(`${accountFolder}.balance`, { val: account.balance, ack: true });
+      await this.setObjectNotExistsAsync(`${accountFolder}.lastUpdate`, {
+        type: "state",
+        common: {
+          name: "Last Price Update",
+          type: "string",
+          role: "date",
+          read: true,
+          write: false
+        },
+        native: {}
+      });
       await this.setObjectNotExistsAsync(`${accountFolder}.info`, {
         type: "folder",
         common: {
@@ -529,6 +540,10 @@ class OctopusEnergy extends utils.Adapter {
           val: JSON.stringify(comprehensiveData),
           ack: true
         });
+        await this.setState(`${accountFolder}.lastUpdate`, {
+          val: (/* @__PURE__ */ new Date()).toISOString(),
+          ack: true
+        });
         const devices = await this.apiClient.getDevices(account.accountNumber);
         this.log.debug(`Found ${devices.length} device(s) for account ${account.accountNumber}`);
         for (const device of devices) {
@@ -863,6 +878,10 @@ class OctopusEnergy extends utils.Adapter {
           });
           await this.setState(`${accountFolder}.info.rawData`, {
             val: JSON.stringify(comprehensiveData),
+            ack: true
+          });
+          await this.setState(`${accountFolder}.lastUpdate`, {
+            val: (/* @__PURE__ */ new Date()).toISOString(),
             ack: true
           });
         }
