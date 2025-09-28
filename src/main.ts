@@ -148,6 +148,19 @@ class OctopusEnergy extends utils.Adapter {
 			// Set initial balance
 			await this.setState(`${accountFolder}.balance`, { val: account.balance, ack: true });
 
+			// Create last update state
+			await this.setObjectNotExistsAsync(`${accountFolder}.lastUpdate`, {
+				type: 'state',
+				common: {
+					name: 'Last Price Update',
+					type: 'string',
+					role: 'date',
+					read: true,
+					write: false,
+				},
+				native: {},
+			});
+
 			// Create info folder for comprehensive account data
 			await this.setObjectNotExistsAsync(`${accountFolder}.info`, {
 				type: 'folder',
@@ -608,6 +621,12 @@ class OctopusEnergy extends utils.Adapter {
 					ack: true,
 				});
 
+				// Update last update timestamp after initial price fetch
+				await this.setState(`${accountFolder}.lastUpdate`, {
+					val: new Date().toISOString(),
+					ack: true,
+				});
+
 				// Fetch devices
 				const devices = await this.apiClient.getDevices(account.accountNumber);
 				this.log.debug(`Found ${devices.length} device(s) for account ${account.accountNumber}`);
@@ -1043,6 +1062,12 @@ class OctopusEnergy extends utils.Adapter {
 					// Update raw data
 					await this.setState(`${accountFolder}.info.rawData`, {
 						val: JSON.stringify(comprehensiveData),
+						ack: true,
+					});
+
+					// Update last update timestamp
+					await this.setState(`${accountFolder}.lastUpdate`, {
+						val: new Date().toISOString(),
 						ack: true,
 					});
 				}
