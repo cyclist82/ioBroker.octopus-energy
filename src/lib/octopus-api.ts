@@ -333,7 +333,7 @@ export class OctopusApiClient {
 					true,
 				);
 				completedDispatches = dispatchResponse.completedDispatches || [];
-			} catch (error: any) {
+			} catch {
 				// Ignore errors - device may not support dispatches
 			}
 		}
