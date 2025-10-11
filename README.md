@@ -23,6 +23,7 @@ The Octopus Energy adapter for ioBroker enables you to:
 - 💡 Access real-time electricity and gas tariff rates
 - ⚡ View time-of-use rates for dynamic tariffs like Agile Octopus
 - 📈 Track historical consumption data from smart meters
+- 💰 Access EPEX spot market day-ahead prices for today and tomorrow
 - 🔌 Monitor and control smart devices (when available)
 - 🏠 Integrate energy data into your home automation scenarios
 
@@ -77,6 +78,8 @@ octopus-energy.0
     └── property_<PROPERTY_ID>
         ├── address               # Property address
         ├── electricity
+        │   ├── epexPricesToday   # EPEX spot prices for today (JSON array)
+        │   ├── epexPricesTomorrow # EPEX spot prices for tomorrow (JSON array)
         │   └── malo_<MALO_NUMBER>
         │       ├── mpan          # Meter Point Administration Number
         │       ├── referenceConsumption  # Annual reference consumption
@@ -126,6 +129,19 @@ For customers on dynamic tariffs like Agile Octopus:
 - **rate**: Price per kWh for specific time periods
 - **activeFrom/activeTo**: Time windows for each rate
 
+### EPEX Spot Prices
+
+Access to EPEX day-ahead electricity spot market prices:
+
+- **epexPricesToday**: Array of spot prices for the current day (00:00-23:59)
+- **epexPricesTomorrow**: Array of spot prices for the next day (available after ~14:00)
+- Each price entry includes:
+  - **startTime**: Start of the price period (ISO timestamp)
+  - **endTime**: End of the price period (ISO timestamp)
+  - **value**: Spot market price in EUR/MWh
+
+Prices are automatically rotated at midnight - tomorrow's prices become today's prices.
+
 ## Usage Examples
 
 ### Example 1: Display Current Electricity Rate
@@ -173,6 +189,31 @@ on({ id: 'octopus-energy.0.account_*.balance', change: 'ne' }, function (obj) {
 });
 ```
 
+### Example 4: Use EPEX Spot Prices for Smart Charging
+
+Optimize charging/heating based on EPEX spot market prices:
+
+```javascript
+// Find the cheapest hours for today
+const epexPricesToday = JSON.parse(
+	getState('octopus-energy.0.account_A-XXX.property_XXX.electricity.epexPricesToday').val,
+);
+
+// Sort by price and get the 4 cheapest hours
+const cheapestHours = epexPricesToday
+	.sort((a, b) => a.value - b.value)
+	.slice(0, 4)
+	.map((price) => new Date(price.startTime).getHours());
+
+// Check if current hour is one of the cheapest
+const currentHour = new Date().getHours();
+if (cheapestHours.includes(currentHour)) {
+	// Start EV charging, water heater, etc.
+	setState('ev-charger.start', true);
+	console.log(`Starting charging - cheap EPEX price: ${epexPricesToday.find((p) => new Date(p.startTime).getHours() === currentHour).value} EUR/MWh`);
+}
+```
+
 ## Features
 
 ### Real-Time Pricing
@@ -186,6 +227,10 @@ For customers with smart meters, the adapter provides detailed consumption data 
 ### Multi-Property Support
 
 Manage multiple properties under one account, each with their own meters and tariffs.
+
+### EPEX Spot Market Integration
+
+Access day-ahead electricity spot market prices from EPEX to optimize energy consumption during low-price periods. Perfect for scheduling electric vehicle charging, heat pumps, or other high-consumption devices.
 
 ### Comprehensive Tariff Details
 
@@ -248,6 +293,12 @@ This adapter is not officially affiliated with or endorsed by Octopus Energy. It
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+
+- (Leif Lampater) Added EPEX spot market day-ahead price integration for today and tomorrow
+- (Leif Lampater) Implemented automatic price rotation at midnight
+- (Leif Lampater) Updated to ESLint 9 with flat config format
+
 ### 0.0.3 (2025-09-28)
 
 - (Leif Lampater) Added lastUpdate state to track when prices were last updated
