@@ -1164,9 +1164,9 @@ class OctopusEnergy extends utils.Adapter {
 
 										if (
 											currentAgreement.unitRateInformation?.__typename ===
-											'SimpleProductUnitRateInformation' &&
+												'SimpleProductUnitRateInformation' &&
 											currentAgreement.unitRateInformation.latestGrossUnitRateCentsPerKwh !==
-											undefined
+												undefined
 										) {
 											await this.setState(`${agreementFolder}.currentRate`, {
 												val:

@@ -371,12 +371,12 @@ export class OctopusApiClient {
 								mpan: malo.meloNumber,
 								meters: malo.meter
 									? [
-										{
-											id: malo.meter.id,
-											serialNumber: malo.meter.number,
-											makeAndType: malo.meter.meterType,
-										},
-									]
+											{
+												id: malo.meter.id,
+												serialNumber: malo.meter.number,
+												makeAndType: malo.meter.meterType,
+											},
+										]
 									: [],
 								agreements: malo.agreements || [],
 							})) || [],
@@ -386,12 +386,12 @@ export class OctopusApiClient {
 								mprn: malo.meloNumber,
 								meters: malo.meter
 									? [
-										{
-											id: malo.meter.id,
-											serialNumber: malo.meter.number,
-											makeAndType: malo.meter.meterType,
-										},
-									]
+											{
+												id: malo.meter.id,
+												serialNumber: malo.meter.number,
+												makeAndType: malo.meter.meterType,
+											},
+										]
 									: [],
 								agreements: malo.agreements || [],
 							})) || [],
