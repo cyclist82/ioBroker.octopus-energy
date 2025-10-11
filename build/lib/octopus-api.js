@@ -349,7 +349,7 @@ class OctopusApiClient {
           true
         );
         completedDispatches = dispatchResponse.completedDispatches || [];
-      } catch (error) {
+      } catch {
       }
     }
     return {
@@ -507,6 +507,81 @@ class OctopusApiClient {
       };
     }
     return null;
+  }
+  /**
+   * Get EPEX day ahead prices for a specific period
+   */
+  async getEpexPrices(accountNumber, propertyId, periodStart, periodEnd) {
+    await this.authenticate();
+    const query = `
+			query ElectricityPriceDevelopment($accountNumber: String!, $propertyId: ID!, $periodStart: DateTime!, $periodEnd: DateTime!) {
+				account(accountNumber: $accountNumber) {
+					property(id: $propertyId) {
+						electricityMalos {
+							agreements {
+								...unitRateForecastFields
+								...currentAgreement
+								product {
+									code
+								}
+							}
+						}
+					}
+				}
+				epexDayAheadPrices(periodStart: $periodStart, periodEnd: $periodEnd, first: 96) {
+					...epexDayAheadPrices
+				}
+			}
+
+			fragment unitRateForecastFields on Agreement {
+				unitRateForecast {
+					validFrom
+					validTo
+					unitRateInformation {
+						__typename
+						... on SimpleProductUnitRateInformation {
+							latestGrossUnitRateCentsPerKwh
+						}
+						... on TimeOfUseProductUnitRateInformation {
+							rates {
+								latestGrossUnitRateCentsPerKwh
+							}
+						}
+					}
+				}
+			}
+
+			fragment currentAgreement on Agreement {
+				...agreementStatus
+				isTerminated
+			}
+
+			fragment agreementStatus on Agreement {
+				isActive
+				validFrom
+				validTo
+				isRevoked
+			}
+
+			fragment epexDayAheadPrices on EpexDayAheadPriceConnectionTypeConnection {
+				edges {
+					cursor
+					node {
+						periodStart
+						periodEnd
+						value
+					}
+				}
+			}
+		`;
+    const variables = {
+      accountNumber,
+      propertyId,
+      periodStart,
+      periodEnd
+    };
+    const response = await this.makeGraphQLRequest(query, variables, "ElectricityPriceDevelopment", true);
+    return response;
   }
   /**
    * Legacy method - Get smart meter readings for a property

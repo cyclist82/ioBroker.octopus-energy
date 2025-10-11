@@ -58,6 +58,8 @@ class OctopusEnergy extends utils.Adapter {
 			// Fetch initial data for each account
 			await this.fetchAccountData();
 
+			this.updateMeterReadings();
+			this.updateComprehensiveData();
 			// Schedule regular updates
 			this.scheduleMeterReadingsUpdates(); // Every 15 minutes
 			this.scheduleDailyUpdates(); // Once daily after midnight
@@ -208,6 +210,31 @@ class OctopusEnergy extends utils.Adapter {
 						native: {},
 					});
 				}
+
+				// Create EPEX price states in electricity folder
+				await this.setObjectNotExistsAsync(`${propertyFolder}.electricity.epexPricesToday`, {
+					type: 'state',
+					common: {
+						name: 'EPEX Prices Today',
+						type: 'string',
+						role: 'json',
+						read: true,
+						write: false,
+					},
+					native: {},
+				});
+
+				await this.setObjectNotExistsAsync(`${propertyFolder}.electricity.epexPricesTomorrow`, {
+					type: 'state',
+					common: {
+						name: 'EPEX Prices Tomorrow',
+						type: 'string',
+						role: 'json',
+						read: true,
+						write: false,
+					},
+					native: {},
+				});
 			}
 
 			// Create devices folder
@@ -830,7 +857,10 @@ class OctopusEnergy extends utils.Adapter {
 		// Create cron job for daily updates
 		this.dailyUpdateCron = schedule(
 			cronPattern,
-			() => {
+			async () => {
+				// First, move tomorrow's EPEX prices to today immediately at midnight
+				await this.rotateEpexPrices();
+
 				// Add random delay of 0-15 minutes (0-900000 ms) to avoid API overload
 				const randomDelay = Math.floor(Math.random() * 900000);
 				const delayMinutes = (randomDelay / 60000).toFixed(1);
@@ -855,6 +885,52 @@ class OctopusEnergy extends utils.Adapter {
 			this.log.info('Running initial comprehensive data update');
 			this.updateComprehensiveData();
 		}, initialDelay);
+	}
+
+	/**
+	 * Rotate EPEX prices at midnight: move tomorrow's prices to today
+	 * No network requests - just state manipulation
+	 */
+	private async rotateEpexPrices(): Promise<void> {
+		this.log.info('Rotating EPEX prices at midnight: moving tomorrow to today');
+
+		for (const account of this.accounts) {
+			try {
+				const accountFolder = `account_${account.accountNumber}`;
+
+				// Use cached account properties (no API calls)
+				for (const property of account.properties) {
+					const propertyFolder = `${accountFolder}.property_${property.id}`;
+
+					try {
+						// Get tomorrow's prices
+						const tomorrowState = await this.getStateAsync(
+							`${propertyFolder}.electricity.epexPricesTomorrow`,
+						);
+
+						if (tomorrowState?.val) {
+							// Move tomorrow's prices to today
+							await this.setState(`${propertyFolder}.electricity.epexPricesToday`, {
+								val: tomorrowState.val,
+								ack: true,
+							});
+
+							this.log.debug(`Rotated EPEX prices for property ${property.id}`);
+						}
+
+						// Clear tomorrow's prices (will be refetched in next meter reading update)
+						await this.setState(`${propertyFolder}.electricity.epexPricesTomorrow`, {
+							val: JSON.stringify([]),
+							ack: true,
+						});
+					} catch (error: any) {
+						this.log.warn(`Failed to rotate EPEX prices for property ${property.id}: ${error.message}`);
+					}
+				}
+			} catch (error: any) {
+				this.log.error(`Failed to rotate EPEX prices for account ${account.accountNumber}: ${error.message}`);
+			}
+		}
 	}
 
 	/**
@@ -901,6 +977,64 @@ class OctopusEnergy extends utils.Adapter {
 							this.log.debug(
 								`Failed to fetch smart meter readings for property ${property.id}: ${error.message}`,
 							);
+						}
+
+						// Update EPEX prices (today and tomorrow)
+						try {
+							const now = new Date();
+							const todayStart = new Date(now);
+							todayStart.setHours(0, 0, 0, 0);
+
+							const tomorrowEnd = new Date(now);
+							tomorrowEnd.setDate(tomorrowEnd.getDate() + 2);
+							tomorrowEnd.setHours(0, 0, 0, 0);
+
+							const epexData = await this.apiClient.getEpexPrices(
+								account.accountNumber,
+								property.id,
+								todayStart.toISOString(),
+								tomorrowEnd.toISOString(),
+							);
+
+							if (epexData?.epexDayAheadPrices?.edges) {
+								const prices = epexData.epexDayAheadPrices.edges.map((edge: any) => edge.node);
+
+								// Separate today and tomorrow prices
+								const todayMidnight = new Date(now);
+								todayMidnight.setHours(0, 0, 0, 0);
+
+								const tomorrowMidnight = new Date(now);
+								tomorrowMidnight.setDate(tomorrowMidnight.getDate() + 1);
+								tomorrowMidnight.setHours(0, 0, 0, 0);
+
+								const todayPrices = prices.filter((price: any) => {
+									const priceDate = new Date(price.periodStart);
+									return priceDate >= todayMidnight && priceDate < tomorrowMidnight;
+								});
+
+								const tomorrowPrices = prices.filter((price: any) => {
+									const priceDate = new Date(price.periodStart);
+									return priceDate >= tomorrowMidnight;
+								});
+
+								// Store today's prices
+								await this.setState(`${propertyFolder}.electricity.epexPricesToday`, {
+									val: JSON.stringify(todayPrices),
+									ack: true,
+								});
+
+								// Store tomorrow's prices
+								await this.setState(`${propertyFolder}.electricity.epexPricesTomorrow`, {
+									val: JSON.stringify(tomorrowPrices),
+									ack: true,
+								});
+
+								this.log.debug(
+									`Updated EPEX prices for property ${property.id}: ${todayPrices.length} today, ${tomorrowPrices.length} tomorrow`,
+								);
+							}
+						} catch (error: any) {
+							this.log.debug(`Failed to fetch EPEX prices for property ${property.id}: ${error.message}`);
 						}
 					}
 				}
@@ -1030,9 +1164,9 @@ class OctopusEnergy extends utils.Adapter {
 
 										if (
 											currentAgreement.unitRateInformation?.__typename ===
-												'SimpleProductUnitRateInformation' &&
+											'SimpleProductUnitRateInformation' &&
 											currentAgreement.unitRateInformation.latestGrossUnitRateCentsPerKwh !==
-												undefined
+											undefined
 										) {
 											await this.setState(`${agreementFolder}.currentRate`, {
 												val:

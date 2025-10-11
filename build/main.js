@@ -62,6 +62,8 @@ class OctopusEnergy extends utils.Adapter {
       this.log.info(`Found ${this.accounts.length} account(s)`);
       await this.createAccountStructures();
       await this.fetchAccountData();
+      this.updateMeterReadings();
+      this.updateComprehensiveData();
       this.scheduleMeterReadingsUpdates();
       this.scheduleDailyUpdates();
     } catch (error) {
@@ -82,7 +84,7 @@ class OctopusEnergy extends utils.Adapter {
         this.dailyUpdateCron = null;
       }
       callback();
-    } catch (e) {
+    } catch {
       callback();
     }
   }
@@ -185,6 +187,28 @@ class OctopusEnergy extends utils.Adapter {
             native: {}
           });
         }
+        await this.setObjectNotExistsAsync(`${propertyFolder}.electricity.epexPricesToday`, {
+          type: "state",
+          common: {
+            name: "EPEX Prices Today",
+            type: "string",
+            role: "json",
+            read: true,
+            write: false
+          },
+          native: {}
+        });
+        await this.setObjectNotExistsAsync(`${propertyFolder}.electricity.epexPricesTomorrow`, {
+          type: "state",
+          common: {
+            name: "EPEX Prices Tomorrow",
+            type: "string",
+            role: "json",
+            read: true,
+            write: false
+          },
+          native: {}
+        });
       }
       await this.setObjectNotExistsAsync(`${accountFolder}.devices`, {
         type: "folder",
@@ -711,7 +735,8 @@ class OctopusEnergy extends utils.Adapter {
     this.log.info("Scheduling daily comprehensive updates at midnight (with 0-15 min random delay)");
     this.dailyUpdateCron = (0, import_node_cron.schedule)(
       cronPattern,
-      () => {
+      async () => {
+        await this.rotateEpexPrices();
         const randomDelay = Math.floor(Math.random() * 9e5);
         const delayMinutes = (randomDelay / 6e4).toFixed(1);
         this.log.debug(`Daily update triggered at midnight, waiting ${delayMinutes} minutes before execution`);
@@ -732,10 +757,45 @@ class OctopusEnergy extends utils.Adapter {
     }, initialDelay);
   }
   /**
+   * Rotate EPEX prices at midnight: move tomorrow's prices to today
+   * No network requests - just state manipulation
+   */
+  async rotateEpexPrices() {
+    this.log.info("Rotating EPEX prices at midnight: moving tomorrow to today");
+    for (const account of this.accounts) {
+      try {
+        const accountFolder = `account_${account.accountNumber}`;
+        for (const property of account.properties) {
+          const propertyFolder = `${accountFolder}.property_${property.id}`;
+          try {
+            const tomorrowState = await this.getStateAsync(
+              `${propertyFolder}.electricity.epexPricesTomorrow`
+            );
+            if (tomorrowState == null ? void 0 : tomorrowState.val) {
+              await this.setState(`${propertyFolder}.electricity.epexPricesToday`, {
+                val: tomorrowState.val,
+                ack: true
+              });
+              this.log.debug(`Rotated EPEX prices for property ${property.id}`);
+            }
+            await this.setState(`${propertyFolder}.electricity.epexPricesTomorrow`, {
+              val: JSON.stringify([]),
+              ack: true
+            });
+          } catch (error) {
+            this.log.warn(`Failed to rotate EPEX prices for property ${property.id}: ${error.message}`);
+          }
+        }
+      } catch (error) {
+        this.log.error(`Failed to rotate EPEX prices for account ${account.accountNumber}: ${error.message}`);
+      }
+    }
+  }
+  /**
    * Update only meter readings for all accounts (runs every 15 minutes)
    */
   async updateMeterReadings() {
-    var _a;
+    var _a, _b;
     if (!this.apiClient) {
       this.log.warn("API client not initialized, skipping meter readings update");
       return;
@@ -768,6 +828,49 @@ class OctopusEnergy extends utils.Adapter {
               this.log.debug(
                 `Failed to fetch smart meter readings for property ${property.id}: ${error.message}`
               );
+            }
+            try {
+              const now = /* @__PURE__ */ new Date();
+              const todayStart = new Date(now);
+              todayStart.setHours(0, 0, 0, 0);
+              const tomorrowEnd = new Date(now);
+              tomorrowEnd.setDate(tomorrowEnd.getDate() + 2);
+              tomorrowEnd.setHours(0, 0, 0, 0);
+              const epexData = await this.apiClient.getEpexPrices(
+                account.accountNumber,
+                property.id,
+                todayStart.toISOString(),
+                tomorrowEnd.toISOString()
+              );
+              if ((_b = epexData == null ? void 0 : epexData.epexDayAheadPrices) == null ? void 0 : _b.edges) {
+                const prices = epexData.epexDayAheadPrices.edges.map((edge) => edge.node);
+                const todayMidnight = new Date(now);
+                todayMidnight.setHours(0, 0, 0, 0);
+                const tomorrowMidnight = new Date(now);
+                tomorrowMidnight.setDate(tomorrowMidnight.getDate() + 1);
+                tomorrowMidnight.setHours(0, 0, 0, 0);
+                const todayPrices = prices.filter((price) => {
+                  const priceDate = new Date(price.periodStart);
+                  return priceDate >= todayMidnight && priceDate < tomorrowMidnight;
+                });
+                const tomorrowPrices = prices.filter((price) => {
+                  const priceDate = new Date(price.periodStart);
+                  return priceDate >= tomorrowMidnight;
+                });
+                await this.setState(`${propertyFolder}.electricity.epexPricesToday`, {
+                  val: JSON.stringify(todayPrices),
+                  ack: true
+                });
+                await this.setState(`${propertyFolder}.electricity.epexPricesTomorrow`, {
+                  val: JSON.stringify(tomorrowPrices),
+                  ack: true
+                });
+                this.log.debug(
+                  `Updated EPEX prices for property ${property.id}: ${todayPrices.length} today, ${tomorrowPrices.length} tomorrow`
+                );
+              }
+            } catch (error) {
+              this.log.debug(`Failed to fetch EPEX prices for property ${property.id}: ${error.message}`);
             }
           }
         }
