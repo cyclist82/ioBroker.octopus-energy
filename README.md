@@ -293,7 +293,7 @@ This adapter is not officially affiliated with or endorsed by Octopus Energy. It
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
-### **WORK IN PROGRESS**
+### 0.0.4 (2025-10-11)
 
 - (Leif Lampater) Added EPEX spot market day-ahead price integration for today and tomorrow
 - (Leif Lampater) Implemented automatic price rotation at midnight

@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "octopus-energy",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "news": {
+      "0.0.4": {
+        "en": "Added EPEX spot market day-ahead price integration for today and tomorrow\nImplemented automatic price rotation at midnight\nUpdated to ESLint 9 with flat config format",
+        "de": "Hinzugefügt EPEX Spot Markt Tag-Kopf-Preis Integration für heute und morgen\nErgänzte automatische Preisdrehung um Mitternacht\nAktualisiert auf ESLint 9 mit flachem config Format",
+        "ru": "Интеграция цен на спотовый рынок EPEX сегодня и завтра\nАвтоматическая ротация цен в полночь\nОбновлено до ESLint 9 с плоским форматом конфигурации",
+        "pt": "Adicionado EPEX mercado spot dia-a-dia preço integração para hoje e amanhã\nRotação automática de preços aplicada à meia-noite\nAtualizado para ESLint 9 com formato de configuração plana",
+        "nl": "Toegevoegd EPEX spot markt day-ahead prijs integratie voor vandaag en morgen\nGeïmplementeerde automatische prijsroulatie om middernacht\nBijgewerkt naar ESLint 9 met plat configuratieformaat",
+        "fr": "Ajout de l'intégration des prix d'aujourd'hui et de demain du marché au spot\nMise en œuvre de la rotation automatique des prix à minuit\nMise à jour à ESLint 9 avec format de configuration plat",
+        "it": "Aggiunto EPEX spot market day-ahead prezzo integrazione per oggi e domani\nRotazione automatica dei prezzi implementata a mezzanotte\nAggiornato a ESLint 9 con il formato di configurazione piatto",
+        "es": "Añadido EPEX spot market day-ahead price integration para hoy y mañana\nEjecución de la rotación automática de precios a medianoche\nActualizado en ESLint 9 con formato de configuración plana",
+        "pl": "Dodano integrację cen na rynku kasowym EPEX na dziś i jutro\nWdrożenie automatycznej rotacji cen o północy\nAktualizacja do ESLint 9 z płaskim formatem konfiguracyjnym",
+        "uk": "Додано EPEX точкову ринкову денну інтеграцію цін на сьогодні і завтра\nРеалізовано автоматичне обертання ціни на ніч\nОновлено в ESLint 9 з плоским форматом конфігурації",
+        "zh-cn": "今天和明天的日前市场价格整合\n午夜实行自动价格轮换\n以平面配置格式更新到 ESLint 9"
+      },
       "0.0.3": {
         "en": "Added lastUpdate state to track when prices were last updated\nMoved @iobroker/types to dependencies for proper runtime support",
         "de": "Hinzugefügt lastUpdate Zustand zu verfolgen, wann die Preise zuletzt aktualisiert wurden\n@iobroker/Typen auf Abhängigkeiten für die richtige Laufzeitunterstützung verschoben",
