@@ -289,10 +289,10 @@ This adapter is not officially affiliated with or endorsed by Octopus Energy. It
 
 ## Changelog
 
-<!--
-	Placeholder for the next version (at the beginning of the line):
-	### **WORK IN PROGRESS**
--->
+### **WORK IN PROGRESS**
+
+- (Leif Lampater) Enhanced EPEX spot price loading to fetch tomorrow's prices
+
 ### 0.0.4 (2025-10-11)
 
 - (Leif Lampater) Added EPEX spot market day-ahead price integration for today and tomorrow

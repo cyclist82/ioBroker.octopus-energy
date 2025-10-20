@@ -795,7 +795,7 @@ class OctopusEnergy extends utils.Adapter {
    * Update only meter readings for all accounts (runs every 15 minutes)
    */
   async updateMeterReadings() {
-    var _a, _b;
+    var _a, _b, _c;
     if (!this.apiClient) {
       this.log.warn("API client not initialized, skipping meter readings update");
       return;
@@ -833,42 +833,56 @@ class OctopusEnergy extends utils.Adapter {
               const now = /* @__PURE__ */ new Date();
               const todayStart = new Date(now);
               todayStart.setHours(0, 0, 0, 0);
-              const tomorrowEnd = new Date(now);
-              tomorrowEnd.setDate(tomorrowEnd.getDate() + 2);
-              tomorrowEnd.setHours(0, 0, 0, 0);
-              const epexData = await this.apiClient.getEpexPrices(
+              const todayEnd = new Date(now);
+              todayEnd.setDate(todayEnd.getDate() + 1);
+              todayEnd.setHours(0, 0, 0, 0);
+              const todayEpexData = await this.apiClient.getEpexPrices(
                 account.accountNumber,
                 property.id,
                 todayStart.toISOString(),
-                tomorrowEnd.toISOString()
+                todayEnd.toISOString()
               );
-              if ((_b = epexData == null ? void 0 : epexData.epexDayAheadPrices) == null ? void 0 : _b.edges) {
-                const prices = epexData.epexDayAheadPrices.edges.map((edge) => edge.node);
-                const todayMidnight = new Date(now);
-                todayMidnight.setHours(0, 0, 0, 0);
-                const tomorrowMidnight = new Date(now);
-                tomorrowMidnight.setDate(tomorrowMidnight.getDate() + 1);
-                tomorrowMidnight.setHours(0, 0, 0, 0);
-                const todayPrices = prices.filter((price) => {
-                  const priceDate = new Date(price.periodStart);
-                  return priceDate >= todayMidnight && priceDate < tomorrowMidnight;
-                });
-                const tomorrowPrices = prices.filter((price) => {
-                  const priceDate = new Date(price.periodStart);
-                  return priceDate >= tomorrowMidnight;
-                });
-                await this.setState(`${propertyFolder}.electricity.epexPricesToday`, {
-                  val: JSON.stringify(todayPrices),
-                  ack: true
-                });
-                await this.setState(`${propertyFolder}.electricity.epexPricesTomorrow`, {
-                  val: JSON.stringify(tomorrowPrices),
-                  ack: true
-                });
-                this.log.debug(
-                  `Updated EPEX prices for property ${property.id}: ${todayPrices.length} today, ${tomorrowPrices.length} tomorrow`
-                );
+              let todayPrices = [];
+              if ((_b = todayEpexData == null ? void 0 : todayEpexData.epexDayAheadPrices) == null ? void 0 : _b.edges) {
+                todayPrices = todayEpexData.epexDayAheadPrices.edges.map((edge) => edge.node);
               }
+              await this.setState(`${propertyFolder}.electricity.epexPricesToday`, {
+                val: JSON.stringify(todayPrices),
+                ack: true
+              });
+              let tomorrowPrices = [];
+              if (now.getHours() >= 12) {
+                const tomorrowStart = new Date(now);
+                tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+                tomorrowStart.setHours(0, 0, 0, 0);
+                const tomorrowEnd = new Date(now);
+                tomorrowEnd.setDate(tomorrowEnd.getDate() + 2);
+                tomorrowEnd.setHours(0, 0, 0, 0);
+                try {
+                  const tomorrowEpexData = await this.apiClient.getEpexPrices(
+                    account.accountNumber,
+                    property.id,
+                    tomorrowStart.toISOString(),
+                    tomorrowEnd.toISOString()
+                  );
+                  if ((_c = tomorrowEpexData == null ? void 0 : tomorrowEpexData.epexDayAheadPrices) == null ? void 0 : _c.edges) {
+                    tomorrowPrices = tomorrowEpexData.epexDayAheadPrices.edges.map(
+                      (edge) => edge.node
+                    );
+                  }
+                } catch (error) {
+                  this.log.debug(
+                    `Failed to fetch tomorrow's EPEX prices for property ${property.id}: ${error.message}`
+                  );
+                }
+              }
+              await this.setState(`${propertyFolder}.electricity.epexPricesTomorrow`, {
+                val: JSON.stringify(tomorrowPrices),
+                ack: true
+              });
+              this.log.debug(
+                `Updated EPEX prices for property ${property.id}: ${todayPrices.length} today, ${tomorrowPrices.length} tomorrow`
+              );
             } catch (error) {
               this.log.debug(`Failed to fetch EPEX prices for property ${property.id}: ${error.message}`);
             }

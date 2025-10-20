@@ -985,54 +985,69 @@ class OctopusEnergy extends utils.Adapter {
 							const todayStart = new Date(now);
 							todayStart.setHours(0, 0, 0, 0);
 
-							const tomorrowEnd = new Date(now);
-							tomorrowEnd.setDate(tomorrowEnd.getDate() + 2);
-							tomorrowEnd.setHours(0, 0, 0, 0);
+							const todayEnd = new Date(now);
+							todayEnd.setDate(todayEnd.getDate() + 1);
+							todayEnd.setHours(0, 0, 0, 0);
 
-							const epexData = await this.apiClient.getEpexPrices(
+							// Always fetch today's prices
+							const todayEpexData = await this.apiClient.getEpexPrices(
 								account.accountNumber,
 								property.id,
 								todayStart.toISOString(),
-								tomorrowEnd.toISOString(),
+								todayEnd.toISOString(),
 							);
 
-							if (epexData?.epexDayAheadPrices?.edges) {
-								const prices = epexData.epexDayAheadPrices.edges.map((edge: any) => edge.node);
-
-								// Separate today and tomorrow prices
-								const todayMidnight = new Date(now);
-								todayMidnight.setHours(0, 0, 0, 0);
-
-								const tomorrowMidnight = new Date(now);
-								tomorrowMidnight.setDate(tomorrowMidnight.getDate() + 1);
-								tomorrowMidnight.setHours(0, 0, 0, 0);
-
-								const todayPrices = prices.filter((price: any) => {
-									const priceDate = new Date(price.periodStart);
-									return priceDate >= todayMidnight && priceDate < tomorrowMidnight;
-								});
-
-								const tomorrowPrices = prices.filter((price: any) => {
-									const priceDate = new Date(price.periodStart);
-									return priceDate >= tomorrowMidnight;
-								});
-
-								// Store today's prices
-								await this.setState(`${propertyFolder}.electricity.epexPricesToday`, {
-									val: JSON.stringify(todayPrices),
-									ack: true,
-								});
-
-								// Store tomorrow's prices
-								await this.setState(`${propertyFolder}.electricity.epexPricesTomorrow`, {
-									val: JSON.stringify(tomorrowPrices),
-									ack: true,
-								});
-
-								this.log.debug(
-									`Updated EPEX prices for property ${property.id}: ${todayPrices.length} today, ${tomorrowPrices.length} tomorrow`,
-								);
+							let todayPrices: any[] = [];
+							if (todayEpexData?.epexDayAheadPrices?.edges) {
+								todayPrices = todayEpexData.epexDayAheadPrices.edges.map((edge: any) => edge.node);
 							}
+
+							// Store today's prices
+							await this.setState(`${propertyFolder}.electricity.epexPricesToday`, {
+								val: JSON.stringify(todayPrices),
+								ack: true,
+							});
+
+							// Fetch tomorrow's prices only if it's after 12:00
+							let tomorrowPrices: any[] = [];
+							if (now.getHours() >= 12) {
+								const tomorrowStart = new Date(now);
+								tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+								tomorrowStart.setHours(0, 0, 0, 0);
+
+								const tomorrowEnd = new Date(now);
+								tomorrowEnd.setDate(tomorrowEnd.getDate() + 2);
+								tomorrowEnd.setHours(0, 0, 0, 0);
+
+								try {
+									const tomorrowEpexData = await this.apiClient.getEpexPrices(
+										account.accountNumber,
+										property.id,
+										tomorrowStart.toISOString(),
+										tomorrowEnd.toISOString(),
+									);
+
+									if (tomorrowEpexData?.epexDayAheadPrices?.edges) {
+										tomorrowPrices = tomorrowEpexData.epexDayAheadPrices.edges.map(
+											(edge: any) => edge.node,
+										);
+									}
+								} catch (error: any) {
+									this.log.debug(
+										`Failed to fetch tomorrow's EPEX prices for property ${property.id}: ${error.message}`,
+									);
+								}
+							}
+
+							// Store tomorrow's prices
+							await this.setState(`${propertyFolder}.electricity.epexPricesTomorrow`, {
+								val: JSON.stringify(tomorrowPrices),
+								ack: true,
+							});
+
+							this.log.debug(
+								`Updated EPEX prices for property ${property.id}: ${todayPrices.length} today, ${tomorrowPrices.length} tomorrow`,
+							);
 						} catch (error: any) {
 							this.log.debug(`Failed to fetch EPEX prices for property ${property.id}: ${error.message}`);
 						}
