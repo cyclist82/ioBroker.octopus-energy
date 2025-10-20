@@ -288,8 +288,7 @@ This adapter is not officially affiliated with or endorsed by Octopus Energy. It
 - Use strong passwords and keep your ioBroker installation secure
 
 ## Changelog
-
-### **WORK IN PROGRESS**
+### 0.0.5 (2025-10-20)
 
 - (Leif Lampater) Enhanced EPEX spot price loading to fetch tomorrow's prices
 

@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "octopus-energy",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "news": {
+      "0.0.5": {
+        "en": "Enhanced EPEX spot price loading to fetch tomorrow's prices",
+        "de": "Verbesserte EPEX-Spotpreisbelastung, um die Preise von morgen zu holen",
+        "ru": "Улучшенная загрузка спотовых цен EPEX для получения завтрашних цен",
+        "pt": "Melhor carregamento de preço à vista EPEX para obter os preços de amanhã",
+        "nl": "Verbeterde EPEX spotprijs laden om de prijzen van morgen te halen",
+        "fr": "Chargement amélioré des prix au comptant EPEX pour récupérer les prix de demain",
+        "it": "Caricamento dei prezzi spot EPEX migliorato per fissare i prezzi di domani",
+        "es": "Mejor precio del spot EPEX cargando para conseguir los precios de mañana",
+        "pl": "Zwiększone obciążenie EPEX ceną kasową w celu uzyskania przyszłych cen",
+        "uk": "Розширене завантаження ЕПЕКС-податків на фейку завтрашні ціни",
+        "zh-cn": "增强的 ETEX 现时价格加载以获取明天的价格"
+      },
       "0.0.4": {
         "en": "Added EPEX spot market day-ahead price integration for today and tomorrow\nImplemented automatic price rotation at midnight\nUpdated to ESLint 9 with flat config format",
         "de": "Hinzugefügt EPEX Spot Markt Tag-Kopf-Preis Integration für heute und morgen\nErgänzte automatische Preisdrehung um Mitternacht\nAktualisiert auf ESLint 9 mit flachem config Format",
