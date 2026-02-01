@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@iobroker/adapter-core": "^3.3.2",
-    "@iobroker/types": "^7.0.7",
+    "@iobroker/types": "^7.1.0",
     "@types/node-cron": "^3.0.11",
     "axios": "^1.12.2",
     "graphql": "^16.11.0",
