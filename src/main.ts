@@ -69,6 +69,76 @@ class OctopusEnergy extends utils.Adapter {
 	}
 
 	/**
+	 * Compute and store derived EPEX states from raw price data.
+	 * Called after every EPEX fetch so automations can use simple boolean/number states
+	 * instead of parsing the JSON array themselves.
+	 *
+	 * @param baseId  State path prefix (e.g. "account_A-123.property_456.electricity")
+	 * @param prices  Raw EPEX price nodes from the API (periodStart, value, unit)
+	 */
+	private async updateEpexAnalysis(baseId: string, prices: any[]): Promise<void> {
+		try {
+			// value is in €/MWh → divide by 10 to get ct/kWh
+			const slots = prices
+				.map((p: any) => ({
+					start: new Date(p.periodStart),
+					end:   new Date(p.periodEnd),
+					ct:    parseFloat(p.value) / 10,
+				}))
+				.filter((s) => !isNaN(s.ct));
+
+			if (slots.length === 0) return;
+
+			const now    = new Date();
+			const values = slots.map((s) => s.ct);
+			const avg    = values.reduce((a, b) => a + b, 0) / values.length;
+			const min    = Math.min(...values);
+			const max    = Math.max(...values);
+			const cur    = slots.find((s) => now >= s.start && now < s.end) ?? slots[slots.length - 1];
+
+			const cheapestWindow = (windowSlots: number): Date | null => {
+				let bestAvg = Infinity;
+				let bestStart: Date | null = null;
+				for (let i = 0; i <= slots.length - windowSlots; i++) {
+					const windowAvg =
+						slots.slice(i, i + windowSlots).reduce((sum, s) => sum + s.ct, 0) / windowSlots;
+					if (windowAvg < bestAvg) {
+						bestAvg = windowAvg;
+						bestStart = slots[i].start;
+					}
+				}
+				return bestStart;
+			};
+
+			const fmtTime = (d: Date | null): string =>
+				d
+					? d.toLocaleTimeString('de-DE', {
+							hour:     '2-digit',
+							minute:   '2-digit',
+							timeZone: 'Europe/Berlin',
+					  })
+					: '';
+
+			const round4 = (n: number): number => Math.round(n * 10000) / 10000;
+
+			await this.setState(`${baseId}.epexCurrentPrice`,    { val: round4(cur?.ct ?? 0), ack: true });
+			await this.setState(`${baseId}.epexDayMin`,          { val: round4(min),           ack: true });
+			await this.setState(`${baseId}.epexDayMax`,          { val: round4(max),           ack: true });
+			await this.setState(`${baseId}.epexDayAvg`,          { val: round4(avg),           ack: true });
+			await this.setState(`${baseId}.epexIsCheapNow`,      { val: (cur?.ct ?? 0) <= avg, ack: true });
+			await this.setState(`${baseId}.epexCheapest1hStart`, { val: fmtTime(cheapestWindow(4)),  ack: true });
+			await this.setState(`${baseId}.epexCheapest4hStart`, { val: fmtTime(cheapestWindow(16)), ack: true });
+
+			this.log.debug(
+				`EPEX analysis: now=${round4(cur?.ct ?? 0)} ct/kWh, avg=${round4(avg)}, ` +
+				`cheap1h=${fmtTime(cheapestWindow(4))}, cheap4h=${fmtTime(cheapestWindow(16))}`,
+			);
+		} catch (error: any) {
+			this.log.warn(`Failed to compute EPEX analysis for ${baseId}: ${error.message}`);
+		}
+	}
+
+	/**
 	 * Is called when adapter shuts down - callback has to be called under any circumstances!
 	 */
 	private onUnload(callback: () => void): void {
@@ -233,6 +303,44 @@ class OctopusEnergy extends utils.Adapter {
 						read: true,
 						write: false,
 					},
+					native: {},
+				});
+
+				// Computed EPEX states — ready to use in automations without parsing JSON
+				const epexBase = `${propertyFolder}.electricity`;
+				await this.setObjectNotExistsAsync(`${epexBase}.epexCurrentPrice`, {
+					type: 'state',
+					common: { name: 'EPEX Current Price', type: 'number', role: 'value.price', unit: 'ct/kWh', read: true, write: false },
+					native: {},
+				});
+				await this.setObjectNotExistsAsync(`${epexBase}.epexDayMin`, {
+					type: 'state',
+					common: { name: 'EPEX Day Minimum', type: 'number', role: 'value.price', unit: 'ct/kWh', read: true, write: false },
+					native: {},
+				});
+				await this.setObjectNotExistsAsync(`${epexBase}.epexDayMax`, {
+					type: 'state',
+					common: { name: 'EPEX Day Maximum', type: 'number', role: 'value.price', unit: 'ct/kWh', read: true, write: false },
+					native: {},
+				});
+				await this.setObjectNotExistsAsync(`${epexBase}.epexDayAvg`, {
+					type: 'state',
+					common: { name: 'EPEX Day Average', type: 'number', role: 'value.price', unit: 'ct/kWh', read: true, write: false },
+					native: {},
+				});
+				await this.setObjectNotExistsAsync(`${epexBase}.epexIsCheapNow`, {
+					type: 'state',
+					common: { name: 'EPEX Is Cheap Now (price below day average)', type: 'boolean', role: 'indicator', read: true, write: false },
+					native: {},
+				});
+				await this.setObjectNotExistsAsync(`${epexBase}.epexCheapest1hStart`, {
+					type: 'state',
+					common: { name: 'EPEX Cheapest 1h Window Start (HH:MM)', type: 'string', role: 'text', read: true, write: false },
+					native: {},
+				});
+				await this.setObjectNotExistsAsync(`${epexBase}.epexCheapest4hStart`, {
+					type: 'state',
+					common: { name: 'EPEX Cheapest 4h Window Start (HH:MM)', type: 'string', role: 'text', read: true, write: false },
 					native: {},
 				});
 			}
@@ -1007,6 +1115,11 @@ class OctopusEnergy extends utils.Adapter {
 								val: JSON.stringify(todayPrices),
 								ack: true,
 							});
+
+							// Update computed EPEX states for automation use
+							if (todayPrices.length > 0) {
+								await this.updateEpexAnalysis(`${propertyFolder}.electricity`, todayPrices);
+							}
 
 							// Fetch tomorrow's prices only if it's after 12:00
 							let tomorrowPrices: any[] = [];
